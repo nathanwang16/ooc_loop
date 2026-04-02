@@ -1,0 +1,72 @@
+# OoC-Optimizer Default Configuration
+# =====================================
+# All parameters match the Development Guide specifications.
+
+fixed_parameters:
+  chamber_length_um: 10000      # L = 10 mm
+  inlet_width_um: 500           # W_in = 500 μm (standard tubing ID)
+  fluid_viscosity_Pa_s: 0.001   # μ = 0.001 Pa·s (culture media ≈ water)
+  fluid_density_kg_m3: 1000     # ρ = 1000 kg/m³
+
+continuous_bounds:
+  W:                          # Chamber width (μm)
+    min: 500
+    max: 3000
+  d_p:                        # Pillar diameter (μm)
+    min: 100
+    max: 400
+  s_p:                        # Pillar gap, center-to-center (μm)
+    min: 200
+    max: 1000
+  theta:                      # Inlet taper angle (degrees)
+    min: 15
+    max: 75
+  Q:                          # Flow rate (μL/min)
+    min: 5
+    max: 200
+
+discrete_levels:
+  pillar_config:
+    - "none"
+    - "1x4"
+    - "2x4"
+    - "3x6"
+  chamber_height:             # H (μm)
+    - 200
+    - 300
+
+solver_settings:
+  convergence_criterion: 1.0e-6
+  max_iterations: 2000
+  mesh_resolution: 1          # multiplier (1 = default, 2 = 2× refinement)
+  solver_timeout_s: 300       # kill runs exceeding 5 minutes
+
+optimization:
+  n_sobol_init: 15            # 3× the 5 continuous dimensions
+  n_bo_iterations: 35
+  total_per_config: 50        # n_sobol_init + n_bo_iterations
+
+  constraints:
+    tau_mean_min: 0.5         # Pa — WSS lower physiological bound
+    tau_mean_max: 2.0         # Pa — WSS upper physiological bound
+    f_dead_max: 0.05          # maximum dead zone fraction (5%)
+
+  penalty_cv_tau: 999.0       # returned on simulation failure
+
+paths:
+  template_case: "ooc_optimizer/cfd/template"
+  stl_output_dir: "data/stl"
+  case_output_dir: "data/cases"
+  results_dir: "data/results"
+  evaluation_log: "data/results/evaluations.jsonl"
+  figures_dir: "figures"
+
+# Baseline geometry for comparison (no optimization)
+baseline:
+  W: 1500
+  d_p: 0
+  s_p: 0
+  theta: 90
+  Q: 50
+  pillar_config: "none"
+  H: 200

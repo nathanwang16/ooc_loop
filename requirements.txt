@@ -1,0 +1,30 @@
+# OoC-Optimizer Dependencies
+# Install: pip install -r requirements.txt
+# Recommended: conda activate ooc
+
+# Geometry generation
+cadquery>=2.4.0
+
+# Numerical / scientific
+numpy>=1.24.0
+scipy>=1.11.0
+
+# Bayesian optimization
+botorch>=0.11.0
+gpytorch>=1.11.0
+torch>=2.1.0
+
+# Configuration
+pyyaml>=6.0
+
+# Plotting and visualization
+matplotlib>=3.7.0
+
+# Experimental data analysis (Module 4.3)
+opencv-python>=4.8.0
+
+# Testing
+pytest>=7.4.0
+
+# Logging / utilities
+tqdm>=4.66.0

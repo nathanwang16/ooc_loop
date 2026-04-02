@@ -1,0 +1,27 @@
+[build-system]
+requires = ["setuptools>=68.0", "wheel"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "ooc-optimizer"
+version = "0.1.0"
+description = "Automated pipeline for organ-on-chip microfluidic device design, simulation, and Bayesian optimization"
+requires-python = ">=3.10"
+
+[tool.setuptools.packages.find]
+exclude = ["tests*", "scripts*"]
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+markers = [
+    "slow: marks tests that require significant runtime (e.g. CFD)",
+    "openfoam: marks tests that require a working OpenFOAM installation",
+]
+filterwarnings = ["ignore::DeprecationWarning"]
+
+[tool.ruff]
+line-length = 100
+target-version = "py311"
+
+[tool.ruff.lint]
+select = ["E", "F", "W", "I"]
