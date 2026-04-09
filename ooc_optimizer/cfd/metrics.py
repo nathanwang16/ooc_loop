@@ -16,6 +16,7 @@ import numpy as np
 from ooc_optimizer.cfd.foam_parser import (
     read_vector_field, 
     read_scalar_field, 
+    read_cell_centres,
     find_latest_time
 )
 
@@ -26,64 +27,57 @@ def extract_metrics(
     case_dir: Path,
     H: float,
     mu: float,
+    L_mm: float = 20.0, # Added for masking
 ) -> Dict[str, float]:
-    """
-    Extract WSS and flow metrics from a completed simulation.
-
-    Parameters
-    ----------
-    case_dir : Path
-        OpenFOAM case directory with converged results.
-    H : float
-        Channel height in m (for τ = 6μU/H).
-    mu : float
-        Dynamic viscosity in Pa·s.
-
-    Returns
-    -------
-    metrics : dict
-        cv_tau, tau_mean, tau_min, tau_max, f_dead, delta_p, converged.
-    """
     case_dir = Path(case_dir)
     
     try:
-        # 1. Read velocity field
-        U_field = _read_velocity_field(case_dir)
+        latest_time = find_latest_time(case_dir)
+        if latest_time is None:
+            raise FileNotFoundError("No result time directory found.")
+
+        # 1. Read fields AND cell centers (New from Verification logic)
+        U_field = read_vector_field(latest_time / "U")
         U_mag = np.linalg.norm(U_field, axis=1)
+        centres = read_cell_centres(case_dir)
+        x_coords = centres[:, 0]
 
-        # 2. Compute Shear Stress on the floor
-        tau_floor = _compute_floor_wss(U_mag, H, mu)
+        # 2. Apply Developed Flow Mask (Crucial improvement)
+        # We ignore the first and last 10% of the channel to ensure 
+        # we are optimizing for steady-state physics.
+        L_m = L_mm * 1e-3
+        mask = (x_coords > 0.1 * L_m) & (x_coords < 0.9 * L_m)
+        
+        if not np.any(mask):
+            mask = np.ones_like(U_mag, dtype=bool) # Fallback if mask fails
+        
+        U_mag_dev = U_mag[mask]
 
-        # 3. Compute Metrics
+        # 3. Compute Metrics on masked data
+        tau_floor = _compute_floor_wss(U_mag_dev, H, mu)
+        
         tau_mean = np.mean(tau_floor)
         tau_std = np.std(tau_floor)
         cv_tau = tau_std / tau_mean if tau_mean > 0 else 999.0
         
-        f_dead = _compute_dead_fraction(U_mag)
+        f_dead = _compute_dead_fraction(U_mag_dev)
         delta_p = _compute_pressure_drop(case_dir)
 
-        metrics = {
+        return {
             "cv_tau": float(cv_tau),
             "tau_mean": float(tau_mean),
             "tau_min": float(np.min(tau_floor)),
             "tau_max": float(np.max(tau_floor)),
             "f_dead": float(f_dead),
             "delta_p": float(delta_p),
-            "converged": True # Solver success is handled by the calling solver module
+            "converged": True 
         }
-        
-        return metrics
 
     except Exception as e:
-        logger.error(f"Failed to extract metrics from {case_dir}: {e}")
+        logger.error(f"Metric extraction failed: {e}")
         return {
-            "cv_tau": 999.0,
-            "tau_mean": 0.0,
-            "tau_min": 0.0,
-            "tau_max": 0.0,
-            "f_dead": 1.0,
-            "delta_p": 0.0,
-            "converged": False
+            "cv_tau": 999.0, "tau_mean": 0.0, "tau_min": 0.0, 
+            "tau_max": 0.0, "f_dead": 1.0, "delta_p": 0.0, "converged": False
         }
 
 
