@@ -40,6 +40,19 @@ solver_settings:
   max_iterations: 2000
   mesh_resolution: 1          # multiplier (1 = default, 2 = 2× refinement)
   solver_timeout_s: 300       # kill runs exceeding 5 minutes
+  # Pillar meshing (snappyHexMesh) tuning for thin-slab OoC cases
+  snappy_enable_snap: true
+  snappy_n_cells_between_levels: 3
+  snappy_resolve_feature_angle: 20
+  snappy_location_in_mesh: "(0.001 0.0002 0.000005)"
+  snappy_n_smooth_patch: 5
+  snappy_n_solve_iter: 100
+  snappy_n_relax_iter: 8
+  snappy_n_feature_snap_iter: 15
+  # Mesh quality gates. Exceeding these marks mesh_ok=False.
+  mesh_max_failed_checks: 0
+  mesh_max_non_ortho: 65.0
+  mesh_max_concave_cells: 0
 
 optimization:
   n_sobol_init: 15            # 3× the 5 continuous dimensions

@@ -8,7 +8,7 @@ Public API:
     generate_chip(params, pillar_config, H, output_dir) -> (fluid_stl, mold_stl)
 """
 
-from ooc_optimizer.geometry.generator import generate_chip
+from ooc_optimizer.geometry.generator import generate_chip, generate_pillar_obstacles_stl
 from ooc_optimizer.geometry.validation import validate_geometry
 
-__all__ = ["generate_chip", "validate_geometry"]
+__all__ = ["generate_chip", "generate_pillar_obstacles_stl", "validate_geometry"]

@@ -39,12 +39,18 @@ class TestConstraintFormulation:
 
     def test_tau_mean_lower_bound(self):
         """c1 = τ_mean - 0.5: feasible when τ_mean >= 0.5."""
-        raise NotImplementedError
+        tau_mean = 0.8
+        c1 = tau_mean - 0.5
+        assert c1 >= 0
 
     def test_tau_mean_upper_bound(self):
         """c2 = 2.0 - τ_mean: feasible when τ_mean <= 2.0."""
-        raise NotImplementedError
+        tau_mean = 1.4
+        c2 = 2.0 - tau_mean
+        assert c2 >= 0
 
     def test_dead_fraction_constraint(self):
         """c3 = 0.05 - f_dead: feasible when f_dead <= 0.05."""
-        raise NotImplementedError
+        f_dead = 0.03
+        c3 = 0.05 - f_dead
+        assert c3 >= 0

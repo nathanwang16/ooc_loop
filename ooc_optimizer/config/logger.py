@@ -89,6 +89,7 @@ class EvaluationLogger:
         feasible = [
             r for r in records
             if r["metrics"].get("converged", False)
+            and r["metrics"].get("mesh_ok", True)
             and tau_range[0] <= r["metrics"].get("tau_mean", 0) <= tau_range[1]
             and r["metrics"].get("f_dead", 1.0) <= max_f_dead
         ]

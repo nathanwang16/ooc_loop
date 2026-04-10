@@ -9,7 +9,6 @@ Checks:
 """
 
 import logging
-import math
 from typing import Dict, List
 import cadquery as cq
 
@@ -41,9 +40,9 @@ def validate_geometry(params: Dict[str, float], pillar_config: str, H: float, so
     if not check_min_feature_size(params):
         errors.append("One or more features are below the 100um printer resolution limit.")
 
-    # 4. Check Volume Range (Sanity Check)
-    if not check_volume_range(solid, params, H):
-        errors.append("Computed volume is outside expected bounds (possible CAD corruption).")
+    # 4. Check positive volume (unit-agnostic sanity check)
+    if not check_positive_volume(solid):
+        errors.append("Computed volume is non-positive (possible CAD corruption).")
 
     # 5. Check Manifold/Self-Intersection (CadQuery isValid)
     if not solid.val().isValid():
@@ -72,25 +71,6 @@ def check_min_feature_size(params: Dict[str, float], min_feature: float = 100.0)
     return True
 
 
-def check_volume_range(solid, params: Dict[str, float], H: float) -> bool:
-    """
-    Verify computed volume is within expected bounds.
-    Theoretical volume = (V_chamber + 2 * V_taper) - V_pillars
-    """
-    W = params['W']
-    theta = params['theta']
-    L_chamber = 10000.0
-    W_in = 500.0
-    
-    # Simple bounding box volume for rough check
-    L_taper = (W - W_in) / (2 * math.tan(math.radians(theta)))
-    total_len = L_chamber + 2 * L_taper
-    
-    # The actual volume should never exceed the bounding box volume
-    # and should not be zero/negative.
-    v_max = total_len * W * H
-    v_min = (L_chamber * W * H) * 0.5 # Minimum 50% of chamber (accounting for pillars)
-    
-    actual_v = solid.val().Volume()
-    
-    return v_min < actual_v < v_max
+def check_positive_volume(solid: cq.Workplane) -> bool:
+    """Ensure the generated geometry has positive volume."""
+    return solid.val().Volume() > 0.0

@@ -11,8 +11,137 @@ import logging
 import math
 from pathlib import Path
 from typing import Dict, Tuple
+
 import cadquery as cq
+
+from ooc_optimizer.geometry.validation import validate_geometry
+
 logger = logging.getLogger(__name__)
+
+VALID_PILLAR_CONFIGS = {"none", "1x4", "2x4", "3x6"}
+L_CHAMBER_UM = 10000.0
+W_INLET_UM = 500.0
+MOLD_WALL_MM = 2.0
+MOLD_BASE_MM = 2.0
+PIN_DIAMETER_MM = 1.0
+PIN_HEIGHT_MM = 1.0
+PILLAR_DZ_MM = 0.01
+
+
+def _um_to_mm(value_um: float) -> float:
+    return value_um / 1000.0
+
+
+def _um_to_m(value_um: float) -> float:
+    return value_um * 1e-6
+
+
+def _validate_params(params: Dict[str, float], pillar_config: str, H: float) -> None:
+    required = {"W", "theta", "Q"}
+    if pillar_config != "none":
+        required.update({"d_p", "s_p"})
+    missing = [k for k in sorted(required) if k not in params]
+    if missing:
+        raise ValueError(f"Missing required parameters: {missing}")
+    if pillar_config not in VALID_PILLAR_CONFIGS:
+        raise ValueError(f"Invalid pillar_config '{pillar_config}'")
+    if H <= 0:
+        raise ValueError("H must be > 0")
+
+
+def _pillar_grid_centers_um(W_um: float, pillar_config: str) -> Tuple[int, int, list[Tuple[float, float]]]:
+    if pillar_config == "none":
+        return 0, 0, []
+    rows, cols = map(int, pillar_config.split("x"))
+    centers = []
+    for i in range(rows):
+        for j in range(cols):
+            cx = L_CHAMBER_UM * (j + 1) / (cols + 1) - (L_CHAMBER_UM / 2.0)
+            cy = W_um * (i + 1) / (rows + 1) - (W_um / 2.0)
+            centers.append((cx, cy))
+    return rows, cols, centers
+
+
+def _compute_taper_length_um(W_um: float, theta_deg: float) -> float:
+    theta_rad = math.radians(theta_deg)
+    if abs(math.tan(theta_rad)) < 1e-12:
+        raise ValueError("theta leads to invalid taper length (tan(theta) ~ 0)")
+    return abs((W_um - W_INLET_UM) / (2.0 * math.tan(theta_rad)))
+
+
+def _build_fluid_domain(params: Dict[str, float], pillar_config: str, H_um: float) -> cq.Workplane:
+    W_um = float(params["W"])
+    theta_deg = float(params["theta"])
+    H_mm = _um_to_mm(H_um)
+    W_mm = _um_to_mm(W_um)
+    W_in_mm = _um_to_mm(W_INLET_UM)
+    L_chamber_mm = _um_to_mm(L_CHAMBER_UM)
+    taper_mm = _um_to_mm(_compute_taper_length_um(W_um, theta_deg))
+
+    x0 = -L_chamber_mm / 2.0
+    x1 = L_chamber_mm / 2.0
+    x_in = x0 - taper_mm
+    x_out = x1 + taper_mm
+
+    profile = [
+        (x_in, -W_in_mm / 2.0),
+        (x0, -W_mm / 2.0),
+        (x1, -W_mm / 2.0),
+        (x_out, -W_in_mm / 2.0),
+        (x_out, W_in_mm / 2.0),
+        (x1, W_mm / 2.0),
+        (x0, W_mm / 2.0),
+        (x_in, W_in_mm / 2.0),
+    ]
+
+    fluid = cq.Workplane("XY").polyline(profile).close().extrude(H_mm)
+
+    if pillar_config != "none":
+        d_p_mm = _um_to_mm(float(params["d_p"]))
+        _, _, centers_um = _pillar_grid_centers_um(W_um, pillar_config)
+        for cx_um, cy_um in centers_um:
+            fluid = fluid.cut(
+                cq.Workplane("XY")
+                .center(_um_to_mm(cx_um), _um_to_mm(cy_um))
+                .circle(d_p_mm / 2.0)
+                .extrude(H_mm + 0.001)
+            )
+    return fluid
+
+
+def _build_mold(fluid_solid: cq.Workplane) -> cq.Workplane:
+    bbox = fluid_solid.val().BoundingBox()
+    fluid_len = bbox.xlen
+    fluid_wid = bbox.ylen
+    fluid_h = bbox.zlen
+
+    mold_len = fluid_len + (2.0 * MOLD_WALL_MM)
+    mold_wid = fluid_wid + (2.0 * MOLD_WALL_MM)
+    mold_h = fluid_h + MOLD_BASE_MM
+
+    mold_block = (
+        cq.Workplane("XY")
+        .box(mold_len, mold_wid, mold_h, centered=(True, True, False))
+        .translate((0, 0, -MOLD_BASE_MM))
+    )
+    mold = mold_block.cut(fluid_solid)
+
+    # Add two alignment pins on opposite corners.
+    pin_offset_x = (mold_len / 2.0) - MOLD_WALL_MM
+    pin_offset_y = (mold_wid / 2.0) - MOLD_WALL_MM
+    pin1 = (
+        cq.Workplane("XY")
+        .center(pin_offset_x, pin_offset_y)
+        .circle(PIN_DIAMETER_MM / 2.0)
+        .extrude(PIN_HEIGHT_MM)
+    )
+    pin2 = (
+        cq.Workplane("XY")
+        .center(-pin_offset_x, -pin_offset_y)
+        .circle(PIN_DIAMETER_MM / 2.0)
+        .extrude(PIN_HEIGHT_MM)
+    )
+    return mold.union(pin1).union(pin2)
 
 
 def generate_chip(
@@ -43,184 +172,71 @@ def generate_chip(
     ValueError
         If any required parameter is missing or out of bounds.
     """
+    _validate_params(params, pillar_config, H)
     output_dir.mkdir(parents=True, exist_ok=True)
-    
-    '''1. Build the fluid volume (the "positive")'''
-    fluid_solid=_build_fluid_domain(params, pillar_config, H)
-    
-    '''2. Build the mold (the "negative")'''
-    mold_solid=_build_mold(fluid_solid, params, H)
-    
-    '''3. Define paths'''
-    fluid_path=output_dir / "fluid_domain.stl"
-    mold_path=output_dir / "chip_mold.stl"
-    
-    '''4. Export to STL (scaling μm to mm for external tools)'''
-    '''OpenFOAM and most 3D printers assume units are mm (right?)'''
-    cq.exporters.export(fluid_solid.scale(0.001), str(fluid_path))
-    cq.exporters.export(mold_solid.scale(0.001), str(mold_path))
-    
-    logger.info(f"Generated geometry: W={params['W']}um, theta={params['theta']}deg, config={pillar_config}")
+
+    fluid_solid = _build_fluid_domain(params, pillar_config, H)
+    validation_errors = validate_geometry(params=params, pillar_config=pillar_config, H=H, solid=fluid_solid)
+    if validation_errors:
+        raise ValueError(f"Geometry validation failed: {validation_errors}")
+
+    mold_solid = _build_mold(fluid_solid)
+
+    fluid_path = output_dir / "fluid_domain.stl"
+    mold_path = output_dir / "chip_mold.stl"
+
+    cq.exporters.export(fluid_solid, str(fluid_path))
+    cq.exporters.export(mold_solid, str(mold_path))
+
+    logger.info(
+        "Generated geometry for %s: W=%.1f um, theta=%.1f deg, H=%.1f um",
+        pillar_config,
+        float(params["W"]),
+        float(params["theta"]),
+        H,
+    )
     return fluid_path, mold_path
 
 
-def _build_fluid_domain(params: Dict[str, float], pillar_config: str, H: float) -> cq.Workplane:
-    """Construct the CadQuery solid representing the internal fluid volume."""
-    W = params['W']
-    theta = params['theta']
-    L_chamber = 10000.0  #10mm fixed
-    W_in = 500.0         #Inlet width fixed
-    
-    # Calculate taper length: tan(theta) = ((W - W_in)/2) / L_taper
-    taper_angle_rad = math.radians(theta)
-    L_taper = (W - W_in) / (2 * math.tan(taper_angle_rad))
-    
-    # Create the central chamber
-    # centered=(True, True, False) means Z starts at 0 and goes up to H
-    fluid = cq.Workplane("XY").box(L_chamber, W, H, centered=(True, True, False))
-    
-    # Create the Inlet Taper via Loft
-    # We create two wireframes at different Z-offsets and loft between them
-    inlet_taper = (
-        cq.Workplane("XY")
-        .workplane(offset=0)
-        .rect(W_in, H)
-        .workplane(offset=L_taper)
-        .rect(W, H)
-        .loft(combine=True)
-    )
-    
-    # Rotate and translate inlet to the front of the chamber
-    # Loft builds along Z; we need it along X
-    inlet_taper = (
-        inlet_taper.rotate((0,0,0), (0,1,0), -90)
-        .translate((-L_chamber/2 - L_taper, 0, 0))
-    )
-    
-    # Outlet is a mirror of the inlet across the YZ plane
-    outlet_taper = inlet_taper.mirror("YZ")
-    
-    # Combine main body
-    fluid = fluid.union(inlet_taper).union(outlet_taper)
-    
-    # Subtract Pillars
-    if pillar_config != "none":
-        rows, cols = map(int, pillar_config.split('x'))
-        d_p = params['d_p']
-        s_p = params['s_p'] # Center-to-center spacing
-        
-        # Grid centering logic
-        x_start = -((cols - 1) * s_p) / 2
-        y_start = -((rows - 1) * s_p) / 2
-        
-        for r in range(rows):
-            for c in range(cols):
-                px = x_start + (c * s_p)
-                py = y_start + (r * s_p)
-                # Create pillar and cut it from the fluid volume
-                pillar = cq.Workplane("XY").center(px, py).circle(d_p/2).extrude(H)
-                fluid = fluid.cut(pillar)
-                
-    return fluid
+def generate_pillar_obstacles_stl(
+    params: Dict[str, float],
+    pillar_config: str,
+    output_path: Path,
+    dz_mm: float = PILLAR_DZ_MM,
+) -> Path:
+    """Generate STL containing only pillar solids for snappyHexMesh carving.
 
-
-def _build_mold(fluid_solid: cq.Workplane, params: Dict[str, float], H: float) -> cq.Workplane:
-    """Construct the negative mold by subtracting the fluid domain from a block."""
-    W = params['W']
-    L_chamber = 10000.0
-    W_in = 500.0
-    theta = params['theta']
-    
-    # Re-calculate total length for the bounding box
-    L_taper = (W - W_in) / (2 * math.tan(math.radians(theta)))
-    total_length = L_chamber + 2 * L_taper
-    
-    # Add 2mm (2000um) padding for handling and wall strength
-    padding = 2000.0 
-    base_thickness = 2000.0
-    
-    block_w = W + 2 * padding
-    block_l = total_length + 2 * padding
-    block_h = H + base_thickness
-    
-    # Create the mold block
-    # Position it so the top surface is at Z=H
-    mold_block = (
-        cq.Workplane("XY")
-        .box(block_l, block_w, block_h, centered=(True, True, False))
-        .translate((0, 0, -base_thickness))
-    )
-    
-    # The fluid volume is subtracted from the block
-    # Because fluid starts at Z=0, it will "carve" into the top of the block
-    return mold_block.cut(fluid_solid)
-
-
-def _place_pillars(chamber_solid: cq.Workplane, params: Dict[str, float], pillar_config: str, H: float) -> cq.Workplane:
-    """
-    Cut cylindrical pillars out of the fluid domain.
-    
-    This follows the 'discrete levels' requirement (1x4, 2x4, 3x6) while 
-    using continuous BO variables for diameter (d_p) and spacing (s_p).
+    The pillar coordinate system matches blockMesh domain coordinates used by
+    solver automation: x ∈ [0, L], y ∈ [0, W], z ∈ [0, dz].
     """
     if pillar_config == "none":
-        return chamber_solid
+        raise ValueError("No pillar obstacles for pillar_config='none'")
+    _validate_params(params, pillar_config, H=200.0)
 
-    # Parse configuration (e.g., "2x4" -> 2 rows, 4 columns)
-    try:
-        rows, cols = map(int, pillar_config.split('x'))
-    except ValueError:
-        logger.warning(f"Invalid pillar_config '{pillar_config}'. Skipping pillars.")
-        return chamber_solid
+    W_um = float(params["W"])
+    d_p_m = _um_to_m(float(params["d_p"]))
+    W_m = _um_to_m(W_um)
+    L_m = _um_to_m(L_CHAMBER_UM)
+    dz_m = dz_mm * 1e-3
+    rows, cols, _ = _pillar_grid_centers_um(W_um, pillar_config)
 
-    d_p = params['d_p']
-    s_p = params['s_p']  # Center-to-center spacing
-    
-    # Calculate grid extents to ensure the array is centered in the chamber
-    # Chamber L is fixed at 10000um (10mm)
-    x_start = -((cols - 1) * s_p) / 2
-    y_start = -((rows - 1) * s_p) / 2
-
-    fluid_with_pillars = chamber_solid
-
-    # Iterate through the grid and cut cylinders
-    for r in range(rows):
-        for c in range(cols):
-            pos_x = x_start + (c * s_p)
-            pos_y = y_start + (r * s_p)
-            
-            # Create a cylinder at the calculated position
-            # We extrude slightly beyond H to ensure a clean boolean cut
-            pillar = (
+    pillars = None
+    for i in range(rows):
+        for j in range(cols):
+            cx_m = L_m * (j + 1) / (cols + 1)
+            cy_m = W_m * (i + 1) / (rows + 1)
+            cyl = (
                 cq.Workplane("XY")
-                .workplane()
-                .center(pos_x, pos_y)
-                .circle(d_p / 2)
-                .extrude(H)
+                .center(cx_m, cy_m)
+                .circle(d_p_m / 2.0)
+                .extrude(dz_m)
             )
-            
-            fluid_with_pillars = fluid_with_pillars.cut(pillar)
+            pillars = cyl if pillars is None else pillars.union(cyl)
 
-    return fluid_with_pillars
+    if pillars is None:
+        raise ValueError(f"No pillars generated for config '{pillar_config}'")
 
-
-def _export_stl(solid: cq.Workplane, output_path: Path, scale: float = 1e-3) -> Path:
-    """
-    Export CadQuery solid to STL, converting from μm to mm.
-    
-    OpenFOAM and SLA slicers expect mm. Since internal math is in μm,
-    we apply a 1e-3 (0.001) scale factor.
-    """
-    # Ensure directory exists
+    output_path = Path(output_path)
     output_path.parent.mkdir(parents=True, exist_ok=True)
-    
-    # Apply scaling and export
-    # Note: .scale() creates a new object, leaving the original intact
-    scaled_solid = solid.scale(scale)
-    
-    cq.exporters.export(scaled_solid, str(output_path))
-    
-    if not output_path.exists():
-        raise IOError(f"Failed to export STL to {output_path}")
-        
+    cq.exporters.export(pillars, str(output_path))
     return output_path
