@@ -36,3 +36,6 @@ Thumbs.db
 
 # Out-of-code insights
 .out-of-code-insights/
+
+data/manual_verification/
+data/manual_verification_complex/
