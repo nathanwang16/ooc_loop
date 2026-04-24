@@ -1,0 +1,195 @@
+[
+  {
+    "state_dir": "examples/tumor_chip_linear_gradient/data/results/bo_opposing_none_H200",
+    "summary": {
+      "state_dir": "examples/tumor_chip_linear_gradient/data/results/bo_opposing_none_H200",
+      "topology": "opposing",
+      "pillar_config": "none",
+      "H": 200,
+      "target_profile": {
+        "kind": "linear_gradient",
+        "axis": "x",
+        "c_high": 1.0,
+        "c_low": 0.0
+      },
+      "x_star_norm": [
+        0.6693882942199707,
+        0.5,
+        0.5,
+        0.243159681558609,
+        0.381753534078598,
+        0.4442960321903229,
+        0.5566895008087158
+      ],
+      "sobol": {
+        "names": [
+          "W",
+          "theta",
+          "Q_total",
+          "r_flow",
+          "delta_W"
+        ],
+        "S1": [
+          0.22144100403151878,
+          0.09634641779384143,
+          0.016245676706346492,
+          0.3809678404958808,
+          0.0016775976716227122
+        ],
+        "S1_conf": [
+          0.09867959651319487,
+          0.055306930430842026,
+          0.02806053585871137,
+          0.1055201237491098,
+          0.0031450229009277377
+        ],
+        "ST": [
+          0.6332793142181568,
+          0.2524882468268571,
+          0.0676258877550267,
+          0.7618036114566115,
+          0.0008832039204048598
+        ],
+        "ST_conf": [
+          0.07531230083185407,
+          0.047136576412907714,
+          0.017117689888623153,
+          0.13862856752835795,
+          0.0002778311343774272
+        ],
+        "n_samples": 3584,
+        "problem": {
+          "num_vars": 5,
+          "names": [
+            "W",
+            "theta",
+            "Q_total",
+            "r_flow",
+            "delta_W"
+          ],
+          "bounds": [
+            [
+              0.0,
+              1.0
+            ],
+            [
+              0.0,
+              1.0
+            ],
+            [
+              0.0,
+              1.0
+            ],
+            [
+              0.0,
+              1.0
+            ],
+            [
+              0.0,
+              1.0
+            ]
+          ],
+          "sample_scaled": true
+        }
+      },
+      "local_sensitivity": {
+        "names": [
+          "W",
+          "theta",
+          "Q_total",
+          "r_flow",
+          "delta_W"
+        ],
+        "raw_gradient": [
+          0.12764779120049038,
+          0.15347071651227218,
+          -0.014976984910609765,
+          -0.1441356701811769,
+          -0.0003721113326067814
+        ],
+        "scaled_sensitivity": [
+          0.12764779120049038,
+          0.15347071651227218,
+          0.014976984910609765,
+          0.1441356701811769,
+          0.0003721113326067814
+        ],
+        "ranking": [
+          [
+            "theta",
+            0.15347071651227218
+          ],
+          [
+            "r_flow",
+            0.1441356701811769
+          ],
+          [
+            "W",
+            0.12764779120049038
+          ],
+          [
+            "Q_total",
+            0.014976984910609765
+          ],
+          [
+            "delta_W",
+            0.0003721113326067814
+          ]
+        ]
+      },
+      "tolerance_intervals": [
+        {
+          "name": "W",
+          "delta_plus_norm": 0.3306117057800293,
+          "delta_minus_norm": 0.6693882942199707,
+          "delta_plus_phys": 595.1010704040527,
+          "delta_minus_phys": 1204.8989295959473,
+          "baseline_mu": 0.9741632139739,
+          "threshold_mu": 1.07157953537129
+        },
+        {
+          "name": "theta",
+          "delta_plus_norm": 0.756840318441391,
+          "delta_minus_norm": 0.243159681558609,
+          "delta_plus_phys": 45.41041910648346,
+          "delta_minus_phys": 14.58958089351654,
+          "baseline_mu": 0.9741632139739,
+          "threshold_mu": 1.07157953537129
+        },
+        {
+          "name": "Q_total",
+          "delta_plus_norm": 0.618246465921402,
+          "delta_minus_norm": 0.381753534078598,
+          "delta_plus_phys": 120.55806085467339,
+          "delta_minus_phys": 74.44193914532661,
+          "baseline_mu": 0.9741632139739,
+          "threshold_mu": 1.07157953537129
+        },
+        {
+          "name": "r_flow",
+          "delta_plus_norm": 0.5557039678096771,
+          "delta_minus_norm": 0.4442960321903229,
+          "delta_plus_phys": 0.4445631742477417,
+          "delta_minus_phys": 0.3554368257522583,
+          "baseline_mu": 0.9741632139739,
+          "threshold_mu": 1.07157953537129
+        },
+        {
+          "name": "delta_W",
+          "delta_plus_norm": 0.4433104991912842,
+          "delta_minus_norm": 0.5566895008087158,
+          "delta_plus_phys": 0.12412693977355958,
+          "delta_minus_phys": 0.15587306022644046,
+          "baseline_mu": 0.9741632139739,
+          "threshold_mu": 1.07157953537129
+        }
+      ],
+      "figures": {
+        "sobol": "examples/tumor_chip_linear_gradient/data/results/bo_opposing_none_H200/interpretability/sobol.png",
+        "local_sensitivity": "examples/tumor_chip_linear_gradient/data/results/bo_opposing_none_H200/interpretability/local_sensitivity.png",
+        "tolerance": "examples/tumor_chip_linear_gradient/data/results/bo_opposing_none_H200/interpretability/tolerance.png"
+      },
+      "heuristic_markdown": "examples/tumor_chip_linear_gradient/data/results/bo_opposing_none_H200/interpretability/design_heuristics.md"
+    }
+  }
+]

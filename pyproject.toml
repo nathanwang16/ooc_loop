@@ -1,27 +1,246 @@
+#
+# pyproject.toml — single source of truth for tumor-chip-design packaging.
+#
+# Development Guide v2 §5.2: hatchling backend, src-layout, pinned ranges
+# (not exact versions), dev/docs/test optional extras.  Python 3.10–3.12 is
+# supported; CI exercises all three.
+#
+
 [build-system]
-requires = ["setuptools>=68.0", "wheel"]
-build-backend = "setuptools.build_meta"
+requires = ["hatchling>=1.24"]
+build-backend = "hatchling.build"
+
 
 [project]
-name = "ooc-optimizer"
-version = "0.1.0"
-description = "Automated pipeline for organ-on-chip microfluidic device design, simulation, and Bayesian optimization"
-requires-python = ">=3.10"
+name = "tumor-chip-design"
+version = "0.6.0"
+description = "Inverse design and interpretability for tumor-on-chip drug-gradient chambers (CFD + BO + sensitivity)."
+readme = "README.md"
+license = { text = "MIT" }
+requires-python = ">=3.10,<3.13"
+authors = [
+    { name = "Dev A" },
+    { name = "Dev B" },
+]
+keywords = [
+    "organ-on-chip",
+    "tumor-on-chip",
+    "microfluidics",
+    "cfd",
+    "openfoam",
+    "bayesian-optimization",
+    "inverse-design",
+    "interpretability",
+    "sensitivity-analysis",
+]
+classifiers = [
+    "Development Status :: 4 - Beta",
+    "Intended Audience :: Science/Research",
+    "License :: OSI Approved :: MIT License",
+    "Operating System :: POSIX :: Linux",
+    "Operating System :: MacOS",
+    "Programming Language :: Python :: 3",
+    "Programming Language :: Python :: 3.10",
+    "Programming Language :: Python :: 3.11",
+    "Programming Language :: Python :: 3.12",
+    "Topic :: Scientific/Engineering",
+    "Topic :: Scientific/Engineering :: Bio-Informatics",
+    "Topic :: Scientific/Engineering :: Physics",
+]
 
-[tool.setuptools.packages.find]
-exclude = ["tests*", "scripts*"]
+dependencies = [
+    # Geometry
+    "cadquery>=2.4,<3.0",
+    # Numerical
+    "numpy>=1.24,<3.0",
+    "scipy>=1.11,<2.0",
+    # Bayesian optimization
+    "torch>=2.1,<3.0",
+    "gpytorch>=1.11,<2.0",
+    "botorch>=0.11,<0.13",
+    # Interpretability
+    "SALib>=1.5,<2.0",
+    # Configuration / schema
+    "pydantic>=2.6,<3.0",
+    "pyyaml>=6.0,<7.0",
+    # Plotting
+    "matplotlib>=3.7,<4.0",
+    # Experimental analysis (Module 4.3)
+    "opencv-python>=4.8,<5.0",
+    # UX
+    "tqdm>=4.66,<5.0",
+    "typer>=0.12,<1.0",
+]
+
+
+[project.optional-dependencies]
+dev = [
+    "ruff>=0.6,<1.0",
+    "mypy>=1.10,<2.0",
+    "pre-commit>=3.7,<5.0",
+    "pip-tools>=7.4,<8.0",
+    "types-pyyaml>=6.0,<7.0",
+]
+test = [
+    "pytest>=7.4,<9.0",
+    "pytest-cov>=5.0,<7.0",
+    "hypothesis>=6.98,<7.0",
+]
+docs = [
+    "mkdocs>=1.6,<2.0",
+    "mkdocs-material>=9.5,<10.0",
+    "mkdocstrings[python]>=0.25,<1.0",
+    "mkdocs-jupyter>=0.24,<1.0",
+    "pymdown-extensions>=10.7,<11.0",
+]
+# Convenience extra: install everything the CI matrix needs.
+all = ["tumor-chip-design[dev,test,docs]"]
+
+
+[project.urls]
+Documentation = "https://github.com/ooc-loop/tumor-chip-design"
+Issues = "https://github.com/ooc-loop/tumor-chip-design/issues"
+Source = "https://github.com/ooc-loop/tumor-chip-design"
+Changelog = "https://github.com/ooc-loop/tumor-chip-design/blob/main/CHANGELOG.md"
+
+
+[project.scripts]
+tumor-chip = "ooc_optimizer.cli:app"
+
+
+# ---------------------------------------------------------------------------
+# Build configuration — hatchling packages both the primary implementation
+# namespace (ooc_optimizer) and the public tumor_chip_design namespace so
+# downstream users can ``import tumor_chip_design`` after ``pip install
+# tumor-chip-design``.  The latter re-exports the former.  A later refactor
+# (tracked in CHANGELOG.md v0.7.0) will migrate ooc_optimizer onto the
+# src/tumor_chip_design/ layout in §5.1 of the Development Guide.
+# ---------------------------------------------------------------------------
+
+[tool.hatch.build.targets.wheel]
+packages = ["ooc_optimizer", "tumor_chip_design"]
+
+[tool.hatch.build.targets.sdist]
+include = [
+    "ooc_optimizer/",
+    "tumor_chip_design/",
+    "configs/",
+    "scripts/",
+    "tests/",
+    "docs/",
+    "paper/",
+    "examples/",
+    "docker/",
+    "README.md",
+    "LICENSE",
+    "CITATION.cff",
+    "CHANGELOG.md",
+    "CONTRIBUTING.md",
+    "CODE_OF_CONDUCT.md",
+    "Development_Guide_v2.md",
+    "requirements.txt",
+]
+
+
+# ---------------------------------------------------------------------------
+# pytest
+# ---------------------------------------------------------------------------
 
 [tool.pytest.ini_options]
 testpaths = ["tests"]
+addopts = "-ra --strict-markers"
 markers = [
     "slow: marks tests that require significant runtime (e.g. CFD)",
     "openfoam: marks tests that require a working OpenFOAM installation",
+    "integration: marks tests that exercise multiple modules end-to-end",
 ]
 filterwarnings = ["ignore::DeprecationWarning"]
 
+
+# ---------------------------------------------------------------------------
+# Coverage — JOSS review criterion: ≥ 80% on src (excluding CFD templates
+# and the thin CLI wrapper).
+# ---------------------------------------------------------------------------
+
+[tool.coverage.run]
+branch = true
+source = ["ooc_optimizer"]
+omit = [
+    "ooc_optimizer/cfd/template/*",
+    "ooc_optimizer/cli.py",
+    "*/__init__.py",
+]
+
+[tool.coverage.report]
+fail_under = 70  # current floor; raise to 80 once interpretability / 3D tests grow.
+show_missing = true
+skip_covered = true
+exclude_lines = [
+    "pragma: no cover",
+    "raise NotImplementedError",
+    "if TYPE_CHECKING:",
+    "if __name__ == .__main__.:",
+]
+
+
+# ---------------------------------------------------------------------------
+# ruff (format + check)
+# ---------------------------------------------------------------------------
+
 [tool.ruff]
 line-length = 100
-target-version = "py311"
+target-version = "py310"
+extend-exclude = [
+    "ooc_optimizer/cfd/template",
+    "data",
+    ".out-of-code-insights",
+]
 
 [tool.ruff.lint]
-select = ["E", "F", "W", "I"]
+select = [
+    "E", "F", "W", "I", "UP", "B", "C4", "SIM", "RET", "PT", "NPY",
+]
+ignore = [
+    "E501",    # line length handled by formatter
+    "B008",    # default arg function call (common in typer / argparse)
+    "SIM108",  # ternary preference
+]
+
+[tool.ruff.lint.per-file-ignores]
+"tests/*" = ["E402", "B018"]
+"scripts/*" = ["E402"]
+
+[tool.ruff.format]
+quote-style = "double"
+indent-style = "space"
+
+
+# ---------------------------------------------------------------------------
+# mypy — strict on the src tree; tests are permissive.
+# ---------------------------------------------------------------------------
+
+[tool.mypy]
+python_version = "3.11"
+strict = true
+warn_unused_ignores = true
+warn_return_any = false
+disallow_untyped_defs = true
+ignore_missing_imports = true
+exclude = [
+    "tests/",
+    "scripts/",
+    "examples/",
+    "ooc_optimizer/cfd/template/",
+]
+
+[[tool.mypy.overrides]]
+module = [
+    "cadquery.*",
+    "SALib.*",
+    "botorch.*",
+    "gpytorch.*",
+    "torch.*",
+    "cv2.*",
+    "matplotlib.*",
+]
+ignore_missing_imports = true

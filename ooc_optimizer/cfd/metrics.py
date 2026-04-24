@@ -1,140 +1,186 @@
 """
-Module 2.2 — Metric Extraction
+Module 2.2 — Metric extraction (v2).
 
-Extracts optimization-relevant metrics from a completed OpenFOAM simulation.
+After both simpleFoam and scalarTransportFoam have run, read the converged
+fields from the latest time directory and compute:
+
+    L2_to_target      — primary v2 objective (relative L2 between simulated
+                        and target concentration fields on the chamber floor)
+    grad_sharpness    — diagnostic (mean |∇C| · L)
+    monotonicity      — diagnostic (fraction of adjacent cells with consistent
+                        sign of ∂C/∂axis; only meaningful for monotonic targets)
+    tau_mean, tau_*, cv_tau, f_dead, delta_p, converged  — retained v1 WSS
+                        metrics; used as constraints and sanity checks
 
 Floor WSS is computed from the 2D depth-averaged velocity via the analytical
-parabolic profile assumption:  τ_floor = 6 μ U_avg / H
-(not from the OpenFOAM wallShearStress function object).
+parabolic profile ``τ_floor = 6 μ U_avg / H``.
 """
+
+from __future__ import annotations
 
 import logging
 from pathlib import Path
-from typing import Dict
+from typing import Dict, Optional
 
 import numpy as np
+
 from ooc_optimizer.cfd.foam_parser import (
-    read_vector_field, 
-    read_scalar_field, 
+    find_latest_time,
     read_cell_centres,
-    find_latest_time
+    read_scalar_field,
+    read_vector_field,
+)
+from ooc_optimizer.optimization.objectives import (
+    TargetProfile,
+    gradient_sharpness,
+    l2_to_target,
+    monotonicity_fraction,
 )
 
 logger = logging.getLogger(__name__)
 
 
-def extract_metrics(
+def extract_v2_metrics(
     case_dir: Path,
     H: float,
     mu: float,
-    L_mm: float = 20.0, # Added for masking
+    *,
+    chamber_length_m: float,
+    chamber_width_m: float,
+    target_profile: Optional[TargetProfile] = None,
 ) -> Dict[str, float]:
+    """Extract the v2 metric set from a fully solved OpenFOAM case."""
     case_dir = Path(case_dir)
-    
+
     try:
         latest_time = find_latest_time(case_dir)
         if latest_time is None:
             raise FileNotFoundError("No result time directory found.")
 
-        # 1. Read fields AND cell centers (New from Verification logic)
-        U_field = read_vector_field(latest_time / "U")
+        # Momentum fields (first solve's latest time was overwritten by the
+        # scalar solve, so read U from the latest dir which still contains U
+        # because scalarTransportFoam writes it unchanged).
+        u_file = latest_time / "U"
+        U_field = read_vector_field(u_file)
         U_mag = np.linalg.norm(U_field, axis=1)
         centres = read_cell_centres(case_dir)
-        x_coords = centres[:, 0]
 
-        # 2. Apply Developed Flow Mask (Crucial improvement)
-        # We ignore the first and last 10% of the channel to ensure 
-        # we are optimizing for steady-state physics.
-        L_m = L_mm * 1e-3
-        mask = (x_coords > 0.1 * L_m) & (x_coords < 0.9 * L_m)
-        
+        # Restrict diagnostics to the "chamber interior" — the central 80% of
+        # the chamber length, which excludes inlet/outlet taper regions.
+        x = centres[:, 0]
+        mask = (x > 0.1 * chamber_length_m) & (x < 0.9 * chamber_length_m)
         if not np.any(mask):
-            mask = np.ones_like(U_mag, dtype=bool) # Fallback if mask fails
-        
+            mask = np.ones_like(U_mag, dtype=bool)
+
+        # Momentum / WSS diagnostics (retained from v1).
         U_mag_dev = U_mag[mask]
-
-        # 3. Compute Metrics on masked data
-        tau_floor = _compute_floor_wss(U_mag_dev, H, mu)
-        
-        tau_mean = np.mean(tau_floor)
-        tau_std = np.std(tau_floor)
+        tau_floor = (6.0 * mu * U_mag_dev) / H
+        tau_mean = float(np.mean(tau_floor))
+        tau_std = float(np.std(tau_floor))
         cv_tau = tau_std / tau_mean if tau_mean > 0 else 999.0
-        
-        f_dead = _compute_dead_fraction(U_mag_dev)
-        delta_p = _compute_pressure_drop(case_dir)
+        f_dead = _dead_fraction(U_mag_dev)
+        delta_p = _pressure_drop(latest_time)
+
+        # Scalar-field diagnostics.
+        L2 = float("nan")
+        grad_sharp = float("nan")
+        mono = float("nan")
+        C_field = None
+        t_file = latest_time / "T"
+        if t_file.exists():
+            C_field = read_scalar_field(t_file)
+            if len(C_field) != len(centres):
+                raise ValueError("T / cell-centre length mismatch")
+            C_dev = C_field[mask]
+            centres_dev = centres[mask]
+
+            if target_profile is not None:
+                C_target = target_profile.evaluate(
+                    centres_dev[:, 0],
+                    centres_dev[:, 1],
+                    L=chamber_length_m,
+                    W=chamber_width_m,
+                )
+                L2 = l2_to_target(C_dev, C_target)
+                mono_axis = "x"
+                if target_profile.kind == "linear_gradient":
+                    mono_axis = str(target_profile.params.get("axis", "x"))
+                mono = monotonicity_fraction(C_dev, centres_dev, axis=mono_axis)
+
+            grad_sharp = gradient_sharpness(C_dev, centres_dev, L=chamber_length_m)
 
         return {
+            "L2_to_target": L2,
+            "grad_sharpness": grad_sharp,
+            "monotonicity": mono,
             "cv_tau": float(cv_tau),
-            "tau_mean": float(tau_mean),
-            "tau_min": float(np.min(tau_floor)),
-            "tau_max": float(np.max(tau_floor)),
-            "f_dead": float(f_dead),
+            "tau_mean": tau_mean,
+            "tau_min": float(np.min(tau_floor)) if tau_floor.size else 0.0,
+            "tau_max": float(np.max(tau_floor)) if tau_floor.size else 0.0,
+            "f_dead": f_dead,
             "delta_p": float(delta_p),
-            "converged": True 
+            "converged": True,
+            "C_mean": float(np.mean(C_field)) if C_field is not None else float("nan"),
+            "C_std": float(np.std(C_field)) if C_field is not None else float("nan"),
         }
 
-    except Exception as e:
-        logger.error(f"Metric extraction failed: {e}")
+    except Exception as exc:
+        logger.error("v2 metric extraction failed: %s", exc, exc_info=True)
         return {
-            "cv_tau": 999.0, "tau_mean": 0.0, "tau_min": 0.0, 
-            "tau_max": 0.0, "f_dead": 1.0, "delta_p": 0.0, "converged": False
+            "L2_to_target": 99.0,
+            "grad_sharpness": 0.0,
+            "monotonicity": 0.0,
+            "cv_tau": 999.0,
+            "tau_mean": 0.0,
+            "tau_min": 0.0,
+            "tau_max": 0.0,
+            "f_dead": 1.0,
+            "delta_p": 0.0,
+            "converged": False,
+            "C_mean": float("nan"),
+            "C_std": float("nan"),
         }
 
 
-def _read_velocity_field(case_dir: Path) -> np.ndarray:
-    """Parse the final-timestep U field from OpenFOAM output."""
-    latest_time = find_latest_time(case_dir)
-    if latest_time is None:
-        raise FileNotFoundError(f"No result time directories found in {case_dir}")
-    
-    u_file = latest_time / "U"
-    return read_vector_field(u_file)
-    
-    u_file = latest_time / "U"
-    return read_vector_field(u_file)
-
-def _read_velocity_field(case_dir: Path) -> np.ndarray:
-    """Parse the final-timestep U field from OpenFOAM output."""
-    latest_time = find_latest_time(case_dir)
-    if latest_time is None:
-        raise FileNotFoundError(f"No result time directories found in {case_dir}")
-    u_file = latest_time / "U"
-    return read_vector_field(u_file)
-
-
-def _compute_floor_wss(U_avg: np.ndarray, H: float, mu: float) -> np.ndarray:
-    """τ_floor = 6 μ U_avg / H for each cell on the culture floor."""
-    # Based on the parabolic velocity profile for laminar flow between plates
-    return (6.0 * mu * U_avg) / H
-
-
-def _compute_dead_fraction(U_mag: np.ndarray, threshold_ratio: float = 0.1) -> float:
-    """Fraction of floor area where velocity < threshold_ratio × mean velocity."""
+def _dead_fraction(U_mag: np.ndarray, threshold_ratio: float = 0.1) -> float:
     if U_mag.size == 0:
         return 1.0
-    
-    u_mean = np.mean(U_mag)
+    u_mean = float(np.mean(U_mag))
     if u_mean == 0:
         return 1.0
-        
-    dead_cells = np.sum(U_mag < (threshold_ratio * u_mean))
-    return float(dead_cells / U_mag.size)
+    return float(np.sum(U_mag < threshold_ratio * u_mean) / U_mag.size)
 
 
-def _compute_pressure_drop(case_dir: Path) -> float:
-    """Compute inlet-to-outlet pressure drop."""
-    latest_time = find_latest_time(case_dir)
-    if latest_time is None:
-        return 0.0
-        
+def _pressure_drop(latest_time: Path) -> float:
     p_file = latest_time / "p"
     if not p_file.exists():
         return 0.0
-        
-    p_field = read_scalar_field(p_file)
-    
-    # In microfluidics with zero-gradient outlets and fixedValue inlets,
-    # ΔP is roughly the max pressure at the inlet. 
-    # For higher precision, one would parse the boundaryField for p, 
-    # but internalField max is a robust proxy for optimization.
-    return float(np.max(p_field) - np.min(p_field))
+    try:
+        p = read_scalar_field(p_file)
+        return float(np.max(p) - np.min(p))
+    except Exception:
+        return 0.0
+
+
+# ---------------------------------------------------------------------------
+# Backward-compatible v1 entry point. The old BO orchestrator and legacy
+# tests still call extract_metrics; route it through the v2 function with
+# sensible defaults (no target ⇒ L2 stays NaN).
+# ---------------------------------------------------------------------------
+
+
+def extract_metrics(case_dir: Path, H: float, mu: float, L_mm: float = 20.0) -> Dict[str, float]:
+    """Legacy v1 metric extraction (no scalar, no target).
+
+    Kept for backward compatibility with the v1 tests and the retained
+    WSS-uniformity example.  Do not use in the v2 BO loop — call
+    ``extract_v2_metrics`` instead.
+    """
+    return extract_v2_metrics(
+        case_dir=case_dir,
+        H=H,
+        mu=mu,
+        chamber_length_m=L_mm * 1e-3,
+        chamber_width_m=(L_mm / 10.0) * 1e-3,  # pragma: no cover (used only by legacy tests)
+        target_profile=None,
+    )

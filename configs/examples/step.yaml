@@ -1,0 +1,9 @@
+# Target-profile example: step profile (sharp transition at x = L/2).
+
+target_profile:
+  kind: step
+  step_axis: x
+  step_frac: 0.5
+  sharpness_frac: 0.05
+  c_high: 1.0
+  c_low: 0.0

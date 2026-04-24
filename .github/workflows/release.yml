@@ -1,0 +1,89 @@
+name: Release
+
+on:
+  push:
+    tags:
+      - "v*"
+
+permissions:
+  contents: write       # for creating GitHub releases
+  id-token: write       # for trusted publishing to PyPI
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    outputs:
+      wheel: ${{ steps.build.outputs.wheel }}
+      sdist: ${{ steps.build.outputs.sdist }}
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+      - name: Install build backend
+        run: |
+          python -m pip install --upgrade pip
+          pip install build hatchling
+      - name: Build distributions
+        id: build
+        run: |
+          python -m build
+          ls -la dist/
+          echo "wheel=$(ls dist/*.whl)" >> $GITHUB_OUTPUT
+          echo "sdist=$(ls dist/*.tar.gz)" >> $GITHUB_OUTPUT
+      - name: Upload distributions
+        uses: actions/upload-artifact@v4
+        with:
+          name: dist
+          path: dist/
+
+  publish-pypi:
+    needs: build
+    runs-on: ubuntu-latest
+    environment:
+      name: pypi
+      url: https://pypi.org/project/tumor-chip-design/
+    steps:
+      - uses: actions/download-artifact@v4
+        with:
+          name: dist
+          path: dist/
+      # Uses PyPI trusted publishing (id-token: write above); no secrets needed.
+      - name: Publish to PyPI
+        uses: pypa/gh-action-pypi-publish@release/v1
+
+  github-release:
+    needs: build
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/download-artifact@v4
+        with:
+          name: dist
+          path: dist/
+      - name: Extract version
+        id: version
+        run: echo "version=${GITHUB_REF_NAME#v}" >> $GITHUB_OUTPUT
+      - name: Create GitHub Release
+        uses: softprops/action-gh-release@v2
+        with:
+          name: "tumor-chip-design ${{ steps.version.outputs.version }}"
+          body_path: CHANGELOG.md
+          files: dist/*
+          draft: false
+          prerelease: false
+
+  # ---------------------------------------------------------------------
+  # Zenodo archival. Zenodo's GitHub integration attaches the release to a
+  # concept DOI automatically when the repository is linked; this step is
+  # provided in case you later want to push metadata via the REST API.
+  # No token configured = no-op.
+  # ---------------------------------------------------------------------
+  zenodo-note:
+    needs: github-release
+    runs-on: ubuntu-latest
+    steps:
+      - name: Zenodo status
+        run: |
+          echo "Zenodo archival is handled by the GitHub↔Zenodo integration."
+          echo "Verify the DOI at https://zenodo.org/record/<id> after the release is visible."

@@ -1,0 +1,46 @@
+[
+  {
+    "case_dir": "examples/tumor_chip_linear_gradient/data/validation_3d/3d_opposing_H200_1776929590643",
+    "winner_spec": {
+      "params": {
+        "W": 2404.8989295959473,
+        "d_p": 250.0,
+        "s_p": 600.0,
+        "theta": 29.58958089351654,
+        "Q_total": 79.44193914532661,
+        "r_flow": 0.4554368257522583,
+        "delta_W": 0.2758730602264404,
+        "Q": 79.44193914532661
+      },
+      "topology": "opposing",
+      "pillar_config": "none",
+      "H": 200.0,
+      "target_profile": {
+        "kind": "linear_gradient",
+        "axis": "x",
+        "c_high": 1.0,
+        "c_low": 0.0
+      }
+    },
+    "L2_to_target_3d": 0.9880725438743463,
+    "L2_to_target_2d": 0.9744035777310216,
+    "L2_relative_delta": 0.014028033615346524,
+    "tau_floor_mean_3d": 418.7033624774199,
+    "tau_floor_max_3d": 2567.7535246230827,
+    "tau_floor_cv_3d": 0.2720304375269115,
+    "wall_time_s": 281.0125223340001,
+    "converged_U": true,
+    "converged_C": true,
+    "warnings": [
+      "wallShearStress unavailable"
+    ],
+    "comparison_plots": {
+      "concentration": "examples/tumor_chip_linear_gradient/data/validation_3d/figures/concentration_residual_3d_vs_2d.png",
+      "centerline": "examples/tumor_chip_linear_gradient/data/validation_3d/figures/centerline_3d_vs_2d.png",
+      "wss": null,
+      "L2_2d_vs_target": 0.9952535179514648,
+      "L2_3d_vs_target": 0.9875377824383126,
+      "L2_3d_vs_2d": 0.28714510671110194
+    }
+  }
+]

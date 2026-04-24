@@ -1,0 +1,42 @@
+[
+  {
+    "Pe": 1.0,
+    "U_mean": 1e-08,
+    "L2_rel_error": 0.0006388665622594511,
+    "linf_error": 0.0005772603723463998,
+    "converged": true,
+    "passed": true,
+    "case_dir": "data/scalar_verification/ad_1d_Pe1",
+    "n_cells": 100
+  },
+  {
+    "Pe": 10.0,
+    "U_mean": 1.0000000000000001e-07,
+    "L2_rel_error": 0.007701676735589297,
+    "linf_error": 0.016315286672199725,
+    "converged": true,
+    "passed": true,
+    "case_dir": "data/scalar_verification/ad_1d_Pe10",
+    "n_cells": 100
+  },
+  {
+    "Pe": 100.0,
+    "U_mean": 1e-06,
+    "L2_rel_error": 0.012564114109802993,
+    "linf_error": 0.1065306597126332,
+    "converged": true,
+    "passed": true,
+    "case_dir": "data/scalar_verification/ad_1d_Pe100",
+    "n_cells": 100
+  },
+  {
+    "Pe": 1000.0,
+    "U_mean": 1e-05,
+    "L2_rel_error": 0.016616688471494955,
+    "linf_error": 0.367879441171442,
+    "converged": true,
+    "passed": true,
+    "case_dir": "data/scalar_verification/ad_1d_Pe1000",
+    "n_cells": 500
+  }
+]

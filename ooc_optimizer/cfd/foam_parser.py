@@ -9,7 +9,7 @@ formats.
 import logging
 import re
 from pathlib import Path
-from typing import Optional
+from typing import List, Optional
 
 import numpy as np
 
@@ -150,16 +150,25 @@ def read_cell_centres(case_dir: Path) -> np.ndarray:
     """
     case_dir = Path(case_dir)
 
-    for search_dir in [case_dir / "0", find_latest_time(case_dir)]:
-        if search_dir is None:
-            continue
+    # Collect every existing numeric time directory + '0' so we can find
+    # cell-centre files regardless of whether purgeWrite has dropped the
+    # simpleFoam time dir where writeCellCentres originally ran.
+    search_dirs: List[Path] = [case_dir / "0"]
+    for d in case_dir.iterdir():
+        if d.is_dir():
+            try:
+                float(d.name)
+                if d.name != "0":
+                    search_dirs.append(d)
+            except ValueError:
+                continue
+
+    for search_dir in search_dirs:
         c_file = search_dir / "C"
         if c_file.exists():
             return read_vector_field(c_file)
 
-    for search_dir in [case_dir / "0", find_latest_time(case_dir)]:
-        if search_dir is None:
-            continue
+    for search_dir in search_dirs:
         ccx = search_dir / "ccx"
         ccy = search_dir / "ccy"
         ccz = search_dir / "ccz"

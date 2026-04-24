@@ -16,16 +16,30 @@ env/
 .vscode/
 .idea/
 
+# Testing / tooling caches
+.pytest_cache/
+.mypy_cache/
+.ruff_cache/
+.coverage
+.coverage.*
+htmlcov/
+
 # Data outputs (regenerable)
 data/stl/
 data/cases/
 data/results/
 data/experiments/
+data/manual_verification/
+data/manual_verification_complex/
+data/premise_test/
 
 # OpenFOAM runtime artifacts
 */processor*/
 */postProcessing/
 */logs/
+
+# Logs
+*.log
 
 # OS
 .DS_Store
@@ -37,5 +51,6 @@ Thumbs.db
 # Out-of-code insights
 .out-of-code-insights/
 
-data/manual_verification/
-data/manual_verification_complex/
+# Local scratch / review notes (kept locally, not tracked)
+feedback.md
+validating whether WSS issue really exist.md

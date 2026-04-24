@@ -38,7 +38,7 @@ def _build_solution(config: dict) -> PoiseuilleSolution:
         L=fp["chamber_length_um"] * 1e-6,       # μm → m
         W=fp["inlet_width_um"] * 2 * 1e-6,      # verification channel: 2× inlet width = 1 mm
         H=config["discrete_levels"]["chamber_height"][0] * 1e-6,  # first height level
-        Q_ul_min=config["baseline"]["Q"],
+        Q_ul_min=config["baseline"].get("Q_total", config["baseline"].get("Q")),
         mu=fp["fluid_viscosity_Pa_s"],
         rho=fp["fluid_density_kg_m3"],
     )

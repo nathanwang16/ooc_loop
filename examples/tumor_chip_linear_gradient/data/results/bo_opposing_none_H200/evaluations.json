@@ -1,0 +1,1372 @@
+{
+  "topology": "opposing",
+  "pillar_config": "none",
+  "H": 200,
+  "parameter_order": [
+    "W",
+    "d_p",
+    "s_p",
+    "theta",
+    "Q_total",
+    "r_flow",
+    "delta_W"
+  ],
+  "active_mask": [
+    true,
+    false,
+    false,
+    true,
+    true,
+    true,
+    true
+  ],
+  "bounds": {
+    "W": [
+      1200.0,
+      3000.0
+    ],
+    "d_p": [
+      100.0,
+      400.0
+    ],
+    "s_p": [
+      200.0,
+      1000.0
+    ],
+    "theta": [
+      15.0,
+      75.0
+    ],
+    "Q_total": [
+      5.0,
+      200.0
+    ],
+    "r_flow": [
+      0.1,
+      0.9
+    ],
+    "delta_W": [
+      0.12,
+      0.4
+    ]
+  },
+  "constraints": {
+    "tau_mean_min": 0.1,
+    "tau_mean_max": 2.0,
+    "f_dead_max": 0.05
+  },
+  "target_profile": {
+    "kind": "linear_gradient",
+    "axis": "x",
+    "c_high": 1.0,
+    "c_low": 0.0
+  },
+  "evaluations": [
+    {
+      "params": {
+        "W": 2731.2851428985596,
+        "d_p": 250.0,
+        "s_p": 600.0,
+        "theta": 38.68294537067413,
+        "Q_total": 20.13241160660982,
+        "r_flow": 0.40538227558135986,
+        "delta_W": 0.2866354060173035,
+        "Q": 20.13241160660982
+      },
+      "metrics": {
+        "L2_to_target": 0.9894521162553643,
+        "grad_sharpness": 53.120864851766726,
+        "monotonicity": 0.5361972951471758,
+        "cv_tau": 0.47054528642324217,
+        "tau_mean": 0.36566992128305753,
+        "tau_min": 0.014484460237611909,
+        "tau_max": 0.8175723861530162,
+        "f_dead": 0.03431818181818182,
+        "delta_p": 0.0,
+        "converged": true,
+        "C_mean": 0.4882459535139372,
+        "C_std": 0.47582654685034886,
+        "converged_U": true,
+        "converged_C": true,
+        "mesh_ok": true,
+        "mesh_strategy_requested": "blockMesh",
+        "mesh_strategy_used": "blockMesh",
+        "mesh_checkmesh_ok": true,
+        "mesh_used_fallback": false,
+        "mesh_checkmesh_summary": {
+          "failed_checks": null,
+          "max_non_ortho": 0.0,
+          "concave_cells": null
+        },
+        "warnings": [],
+        "case_dir": "examples/tumor_chip_linear_gradient/data/cases/run_opposing_none_H200_1776928959610",
+        "topology": "opposing"
+      },
+      "objective": 0.9894521162553643,
+      "raw_L2": 0.9894521162553643,
+      "constraints": [
+        0.26566992128305755,
+        1.6343300787169426,
+        0.015681818181818186
+      ],
+      "feasible": true,
+      "wall_time_s": 24.742513458011672
+    },
+    {
+      "params": {
+        "W": 1324.0481302142143,
+        "d_p": 250.0,
+        "s_p": 600.0,
+        "theta": 61.07078790664673,
+        "Q_total": 164.40375864505768,
+        "r_flow": 0.7296168327331544,
+        "delta_W": 0.2057548499107361,
+        "Q": 164.40375864505768
+      },
+      "metrics": {
+        "L2_to_target": 0.9262196134525394,
+        "grad_sharpness": 52.26155060230683,
+        "monotonicity": 0.5436481357445858,
+        "cv_tau": 0.546076786878243,
+        "tau_mean": 6.212399545852116,
+        "tau_min": 0.3341609123322607,
+        "tau_max": 11.362666368503863,
+        "f_dead": 0.03571428571428571,
+        "delta_p": 0.0,
+        "converged": true,
+        "C_mean": 0.571580494734091,
+        "C_std": 0.4693969763379357,
+        "converged_U": true,
+        "converged_C": true,
+        "mesh_ok": true,
+        "mesh_strategy_requested": "blockMesh",
+        "mesh_strategy_used": "blockMesh",
+        "mesh_checkmesh_ok": true,
+        "mesh_used_fallback": false,
+        "mesh_checkmesh_summary": {
+          "failed_checks": null,
+          "max_non_ortho": 0.0,
+          "concave_cells": null
+        },
+        "warnings": [],
+        "case_dir": "examples/tumor_chip_linear_gradient/data/cases/run_opposing_none_H200_1776928981843",
+        "topology": "opposing"
+      },
+      "objective": 0.9262196134525394,
+      "raw_L2": 0.9262196134525394,
+      "constraints": [
+        6.112399545852116,
+        -4.212399545852116,
+        0.01428571428571429
+      ],
+      "feasible": false,
+      "wall_time_s": 8.410087957978249
+    },
+    {
+      "params": {
+        "W": 2008.82066488266,
+        "d_p": 250.0,
+        "s_p": 600.0,
+        "theta": 22.400566041469574,
+        "Q_total": 110.26035845279694,
+        "r_flow": 0.5183396339416504,
+        "delta_W": 0.37740390539169316,
+        "Q": 110.26035845279694
+      },
+      "metrics": {
+        "L2_to_target": 0.9079386629632535,
+        "grad_sharpness": 49.741306814228324,
+        "monotonicity": 0.5101032126762611,
+        "cv_tau": 0.4949584724435761,
+        "tau_mean": 2.631939904239163,
+        "tau_min": 0.03335868557214204,
+        "tau_max": 5.872468635089429,
+        "f_dead": 0.06468023255813954,
+        "delta_p": 0.0,
+        "converged": true,
+        "C_mean": 0.4766322415663749,
+        "C_std": 0.4534460927582564,
+        "converged_U": true,
+        "converged_C": true,
+        "mesh_ok": true,
+        "mesh_strategy_requested": "blockMesh",
+        "mesh_strategy_used": "blockMesh",
+        "mesh_checkmesh_ok": true,
+        "mesh_used_fallback": false,
+        "mesh_checkmesh_summary": {
+          "failed_checks": null,
+          "max_non_ortho": 0.0,
+          "concave_cells": null
+        },
+        "warnings": [],
+        "case_dir": "examples/tumor_chip_linear_gradient/data/cases/run_opposing_none_H200_1776928990254",
+        "topology": "opposing"
+      },
+      "objective": 0.9079386629632535,
+      "raw_L2": 0.9079386629632535,
+      "constraints": [
+        2.531939904239163,
+        -0.6319399042391631,
+        -0.014680232558139536
+      ],
+      "feasible": false,
+      "wall_time_s": 39.22085920814425
+    },
+    {
+      "params": {
+        "W": 2517.5992369651794,
+        "d_p": 250.0,
+        "s_p": 600.0,
+        "theta": 59.54489350318909,
+        "Q_total": 60.346923023462296,
+        "r_flow": 0.24097585678100586,
+        "delta_W": 0.1871738463640213,
+        "Q": 60.346923023462296
+      },
+      "metrics": {
+        "L2_to_target": 0.9929954472116146,
+        "grad_sharpness": 48.45695232346525,
+        "monotonicity": 0.5034930751317563,
+        "cv_tau": 0.9112691561455369,
+        "tau_mean": 1.2240273340470869,
+        "tau_min": 0.0013437336470977063,
+        "tau_max": 4.213027223463047,
+        "f_dead": 0.23272058823529412,
+        "delta_p": 0.0,
+        "converged": true,
+        "C_mean": 0.5506718873274576,
+        "C_std": 0.4643392138879437,
+        "converged_U": true,
+        "converged_C": true,
+        "mesh_ok": true,
+        "mesh_strategy_requested": "blockMesh",
+        "mesh_strategy_used": "blockMesh",
+        "mesh_checkmesh_ok": true,
+        "mesh_used_fallback": false,
+        "mesh_checkmesh_summary": {
+          "failed_checks": null,
+          "max_non_ortho": 0.0,
+          "concave_cells": null
+        },
+        "warnings": [],
+        "case_dir": "examples/tumor_chip_linear_gradient/data/cases/run_opposing_none_H200_1776929029475",
+        "topology": "opposing"
+      },
+      "objective": 0.9929954472116146,
+      "raw_L2": 0.9929954472116146,
+      "constraints": [
+        1.1240273340470868,
+        0.7759726659529131,
+        -0.18272058823529413
+      ],
+      "feasible": false,
+      "wall_time_s": 26.51158441696316
+    },
+    {
+      "params": {
+        "W": 2237.2733116149902,
+        "d_p": 250.0,
+        "s_p": 600.0,
+        "theta": 50.791743993759155,
+        "Q_total": 88.2891671359539,
+        "r_flow": 0.3765051603317261,
+        "delta_W": 0.3619375467300415,
+        "Q": 88.2891671359539
+      },
+      "metrics": {
+        "L2_to_target": 0.9852706318109249,
+        "grad_sharpness": 53.356688284446776,
+        "monotonicity": 0.5705938306835168,
+        "cv_tau": 0.6519918730918443,
+        "tau_mean": 1.923617300208452,
+        "tau_min": 0.00011035430587576171,
+        "tau_max": 5.418384322865223,
+        "f_dead": 0.078125,
+        "delta_p": 0.0,
+        "converged": true,
+        "C_mean": 0.56301901782114,
+        "C_std": 0.4683214909384693,
+        "converged_U": true,
+        "converged_C": true,
+        "mesh_ok": true,
+        "mesh_strategy_requested": "blockMesh",
+        "mesh_strategy_used": "blockMesh",
+        "mesh_checkmesh_ok": true,
+        "mesh_used_fallback": false,
+        "mesh_checkmesh_summary": {
+          "failed_checks": null,
+          "max_non_ortho": 0.0,
+          "concave_cells": null
+        },
+        "warnings": [],
+        "case_dir": "examples/tumor_chip_linear_gradient/data/cases/run_opposing_none_H200_1776929055987",
+        "topology": "opposing"
+      },
+      "objective": 0.9852706318109249,
+      "raw_L2": 0.9852706318109249,
+      "constraints": [
+        1.823617300208452,
+        0.07638269979154799,
+        -0.028124999999999997
+      ],
+      "feasible": false,
+      "wall_time_s": 31.656156374840066
+    },
+    {
+      "params": {
+        "W": 1846.2681233882904,
+        "d_p": 250.0,
+        "s_p": 600.0,
+        "theta": 28.399328291416168,
+        "Q_total": 138.9166209101677,
+        "r_flow": 0.8522652626037598,
+        "delta_W": 0.13209339573979378,
+        "Q": 138.9166209101677
+      },
+      "metrics": {
+        "L2_to_target": 0.8068798519774334,
+        "grad_sharpness": 44.76048634168872,
+        "monotonicity": 0.50222075999342,
+        "cv_tau": 0.9277625427890813,
+        "tau_mean": 3.994581630038023,
+        "tau_min": 0.003009999915297592,
+        "tau_max": 11.472778272409197,
+        "f_dead": 0.17894736842105263,
+        "delta_p": 0.0,
+        "converged": true,
+        "C_mean": 0.5196894844814062,
+        "C_std": 0.4107623346831525,
+        "converged_U": true,
+        "converged_C": true,
+        "mesh_ok": true,
+        "mesh_strategy_requested": "blockMesh",
+        "mesh_strategy_used": "blockMesh",
+        "mesh_checkmesh_ok": true,
+        "mesh_used_fallback": false,
+        "mesh_checkmesh_summary": {
+          "failed_checks": null,
+          "max_non_ortho": 0.0,
+          "concave_cells": null
+        },
+        "warnings": [],
+        "case_dir": "examples/tumor_chip_linear_gradient/data/cases/run_opposing_none_H200_1776929087644",
+        "topology": "opposing"
+      },
+      "objective": 0.8068798519774334,
+      "raw_L2": 0.8068798519774334,
+      "constraints": [
+        3.8945816300380227,
+        -1.9945816300380228,
+        -0.12894736842105264
+      ],
+      "feasible": false,
+      "wall_time_s": 19.668707167031243
+    },
+    {
+      "params": {
+        "W": 1602.698814868927,
+        "d_p": 250.0,
+        "s_p": 600.0,
+        "theta": 68.00657987594604,
+        "Q_total": 191.41384571790695,
+        "r_flow": 0.6878634452819824,
+        "delta_W": 0.31057836055755617,
+        "Q": 191.41384571790695
+      },
+      "metrics": {
+        "L2_to_target": 0.9103111299180684,
+        "grad_sharpness": 55.9146723476541,
+        "monotonicity": 0.5331862474719617,
+        "cv_tau": 0.6490006934176796,
+        "tau_mean": 5.695166044393544,
+        "tau_min": 0.049093059407812695,
+        "tau_max": 12.963008638524396,
+        "f_dead": 0.07830882352941176,
+        "delta_p": 0.0,
+        "converged": true,
+        "C_mean": 0.4918932042335493,
+        "C_std": 0.4597048549179969,
+        "converged_U": true,
+        "converged_C": true,
+        "mesh_ok": true,
+        "mesh_strategy_requested": "blockMesh",
+        "mesh_strategy_used": "blockMesh",
+        "mesh_checkmesh_ok": true,
+        "mesh_used_fallback": false,
+        "mesh_checkmesh_summary": {
+          "failed_checks": null,
+          "max_non_ortho": 0.0,
+          "concave_cells": null
+        },
+        "warnings": [],
+        "case_dir": "examples/tumor_chip_linear_gradient/data/cases/run_opposing_none_H200_1776929107313",
+        "topology": "opposing"
+      },
+      "objective": 0.9103111299180684,
+      "raw_L2": 0.9103111299180684,
+      "constraints": [
+        5.595166044393545,
+        -3.6951660443935443,
+        -0.02830882352941176
+      ],
+      "feasible": false,
+      "wall_time_s": 23.60019129095599
+    },
+    {
+      "params": {
+        "W": 2895.6780552864075,
+        "d_p": 250.0,
+        "s_p": 600.0,
+        "theta": 30.86866557598114,
+        "Q_total": 46.23804919421673,
+        "r_flow": 0.16522340774536132,
+        "delta_W": 0.2512650871276856,
+        "Q": 46.23804919421673
+      },
+      "metrics": {
+        "L2_to_target": 0.8935860531690923,
+        "grad_sharpness": 37.91607390007551,
+        "monotonicity": 0.5006031363088058,
+        "cv_tau": 0.9629847964086404,
+        "tau_mean": 0.912034294244765,
+        "tau_min": 0.00027961894730156285,
+        "tau_max": 3.475238083237436,
+        "f_dead": 0.11732456140350878,
+        "delta_p": 0.0,
+        "converged": true,
+        "C_mean": 0.4809600824375356,
+        "C_std": 0.39640143950347656,
+        "converged_U": true,
+        "converged_C": true,
+        "mesh_ok": true,
+        "mesh_strategy_requested": "blockMesh",
+        "mesh_strategy_used": "blockMesh",
+        "mesh_checkmesh_ok": true,
+        "mesh_used_fallback": false,
+        "mesh_checkmesh_summary": {
+          "failed_checks": null,
+          "max_non_ortho": 0.0,
+          "concave_cells": null
+        },
+        "warnings": [],
+        "case_dir": "examples/tumor_chip_linear_gradient/data/cases/run_opposing_none_H200_1776929130914",
+        "topology": "opposing"
+      },
+      "objective": 0.8935860531690923,
+      "raw_L2": 0.8935860531690923,
+      "constraints": [
+        0.812034294244765,
+        1.087965705755235,
+        -0.06732456140350877
+      ],
+      "feasible": false,
+      "wall_time_s": 38.321733084041625
+    },
+    {
+      "params": {
+        "W": 2416.6259765625,
+        "d_p": 250.0,
+        "s_p": 600.0,
+        "theta": 23.787918984889984,
+        "Q_total": 57.74678021669388,
+        "r_flow": 0.7798308372497559,
+        "delta_W": 0.31612311363220214,
+        "Q": 57.74678021669388
+      },
+      "metrics": {
+        "L2_to_target": 0.8684438934582913,
+        "grad_sharpness": 48.990709290955095,
+        "monotonicity": 0.533486414083429,
+        "cv_tau": 0.9063224748417308,
+        "tau_mean": 1.219038603977837,
+        "tau_min": 1.1787111914048372e-05,
+        "tau_max": 4.076272679017908,
+        "f_dead": 0.2052295918367347,
+        "delta_p": 0.0,
+        "converged": true,
+        "C_mean": 0.45577843683055924,
+        "C_std": 0.46269892636623616,
+        "converged_U": true,
+        "converged_C": true,
+        "mesh_ok": true,
+        "mesh_strategy_requested": "blockMesh",
+        "mesh_strategy_used": "blockMesh",
+        "mesh_checkmesh_ok": true,
+        "mesh_used_fallback": false,
+        "mesh_checkmesh_summary": {
+          "failed_checks": null,
+          "max_non_ortho": 0.0,
+          "concave_cells": null
+        },
+        "warnings": [],
+        "case_dir": "examples/tumor_chip_linear_gradient/data/cases/run_opposing_none_H200_1776929175007",
+        "topology": "opposing"
+      },
+      "objective": 0.8684438934582913,
+      "raw_L2": 0.8684438934582913,
+      "constraints": [
+        1.1190386039778368,
+        0.7809613960221631,
+        -0.15522959183673468
+      ],
+      "feasible": false,
+      "wall_time_s": 25.10624708305113
+    },
+    {
+      "params": {
+        "W": 2404.8989295959473,
+        "d_p": 250.0,
+        "s_p": 600.0,
+        "theta": 29.58958089351654,
+        "Q_total": 79.44193914532661,
+        "r_flow": 0.4554368257522583,
+        "delta_W": 0.2758730602264404,
+        "Q": 79.44193914532661
+      },
+      "metrics": {
+        "L2_to_target": 0.9744035777310216,
+        "grad_sharpness": 53.33308791729505,
+        "monotonicity": 0.5477739507590254,
+        "cv_tau": 0.46558216850294115,
+        "tau_mean": 1.651711008905306,
+        "tau_min": 0.01648761629683701,
+        "tau_max": 3.774751363565907,
+        "f_dead": 0.04375,
+        "delta_p": 0.0,
+        "converged": true,
+        "C_mean": 0.5340183681876987,
+        "C_std": 0.47471184745114964,
+        "converged_U": true,
+        "converged_C": true,
+        "mesh_ok": true,
+        "mesh_strategy_requested": "blockMesh",
+        "mesh_strategy_used": "blockMesh",
+        "mesh_checkmesh_ok": true,
+        "mesh_used_fallback": false,
+        "mesh_checkmesh_summary": {
+          "failed_checks": null,
+          "max_non_ortho": 0.0,
+          "concave_cells": null
+        },
+        "warnings": [],
+        "case_dir": "examples/tumor_chip_linear_gradient/data/cases/run_opposing_none_H200_1776929205953",
+        "topology": "opposing"
+      },
+      "objective": 0.9744035777310216,
+      "raw_L2": 0.9744035777310216,
+      "constraints": [
+        1.5517110089053059,
+        0.348288991094694,
+        0.0062500000000000056
+      ],
+      "feasible": true,
+      "wall_time_s": 42.30954920803197
+    },
+    {
+      "params": {
+        "W": 2172.504723072052,
+        "d_p": 250.0,
+        "s_p": 600.0,
+        "theta": 55.24996876716614,
+        "Q_total": 10.562132820487022,
+        "r_flow": 0.8076664924621583,
+        "delta_W": 0.1784529232978821,
+        "Q": 10.562132820487022
+      },
+      "metrics": {
+        "L2_to_target": 0.8999003664946524,
+        "grad_sharpness": 35.041802742677845,
+        "monotonicity": 0.5794857224037505,
+        "cv_tau": 0.486053048756869,
+        "tau_mean": 0.24487239141424474,
+        "tau_min": 5.6732155185873495e-05,
+        "tau_max": 0.5443149429837973,
+        "f_dead": 0.052698863636363634,
+        "delta_p": 0.0,
+        "converged": true,
+        "C_mean": 0.6871733846196856,
+        "C_std": 0.41959688920720967,
+        "converged_U": true,
+        "converged_C": true,
+        "mesh_ok": true,
+        "mesh_strategy_requested": "blockMesh",
+        "mesh_strategy_used": "blockMesh",
+        "mesh_checkmesh_ok": true,
+        "mesh_used_fallback": false,
+        "mesh_checkmesh_summary": {
+          "failed_checks": null,
+          "max_non_ortho": 0.0,
+          "concave_cells": null
+        },
+        "warnings": [],
+        "case_dir": "examples/tumor_chip_linear_gradient/data/cases/run_opposing_none_H200_1776929254180",
+        "topology": "opposing"
+      },
+      "objective": 0.8999003664946524,
+      "raw_L2": 0.8999003664946524,
+      "constraints": [
+        0.14487239141424474,
+        1.7551276085857552,
+        -0.002698863636363631
+      ],
+      "feasible": false,
+      "wall_time_s": 14.83041370799765
+    },
+    {
+      "params": {
+        "W": 2199.7297883033752,
+        "d_p": 250.0,
+        "s_p": 600.0,
+        "theta": 58.221938610076904,
+        "Q_total": 68.62122893333435,
+        "r_flow": 0.7530104160308838,
+        "delta_W": 0.21363573789596557,
+        "Q": 68.62122893333435
+      },
+      "metrics": {
+        "L2_to_target": 0.8944640823699637,
+        "grad_sharpness": 46.992154555386335,
+        "monotonicity": 0.504236699541603,
+        "cv_tau": 0.8246465371527469,
+        "tau_mean": 1.5526684471709893,
+        "tau_min": 3.94998318563285e-05,
+        "tau_max": 4.63361312339839,
+        "f_dead": 0.16944444444444445,
+        "delta_p": 0.0,
+        "converged": true,
+        "C_mean": 0.47904570160186144,
+        "C_std": 0.46926191112644444,
+        "converged_U": true,
+        "converged_C": true,
+        "mesh_ok": true,
+        "mesh_strategy_requested": "blockMesh",
+        "mesh_strategy_used": "blockMesh",
+        "mesh_checkmesh_ok": true,
+        "mesh_used_fallback": false,
+        "mesh_checkmesh_summary": {
+          "failed_checks": null,
+          "max_non_ortho": 0.0,
+          "concave_cells": null
+        },
+        "warnings": [],
+        "case_dir": "examples/tumor_chip_linear_gradient/data/cases/run_opposing_none_H200_1776929274902",
+        "topology": "opposing"
+      },
+      "objective": 0.8944640823699637,
+      "raw_L2": 0.8944640823699637,
+      "constraints": [
+        1.4526684471709892,
+        0.4473315528290107,
+        -0.11944444444444445
+      ],
+      "feasible": false,
+      "wall_time_s": 18.301443416858092
+    },
+    {
+      "params": {
+        "W": 1713.192468881607,
+        "d_p": 250.0,
+        "s_p": 600.0,
+        "theta": 49.17786955833435,
+        "Q_total": 17.190936021506786,
+        "r_flow": 0.8643571853637696,
+        "delta_W": 0.21646970629692078,
+        "Q": 17.190936021506786
+      },
+      "metrics": {
+        "L2_to_target": 0.8689426829892196,
+        "grad_sharpness": 34.379173300500014,
+        "monotonicity": 0.5684943739953563,
+        "cv_tau": 0.5090064830531384,
+        "tau_mean": 0.4990824460721137,
+        "tau_min": 0.0004958141208002094,
+        "tau_max": 1.1441631510625874,
+        "f_dead": 0.06821428571428571,
+        "delta_p": 0.0,
+        "converged": true,
+        "C_mean": 0.733369858297235,
+        "C_std": 0.3786323284975883,
+        "converged_U": true,
+        "converged_C": true,
+        "mesh_ok": true,
+        "mesh_strategy_requested": "blockMesh",
+        "mesh_strategy_used": "blockMesh",
+        "mesh_checkmesh_ok": true,
+        "mesh_used_fallback": false,
+        "mesh_checkmesh_summary": {
+          "failed_checks": null,
+          "max_non_ortho": 0.0,
+          "concave_cells": null
+        },
+        "warnings": [],
+        "case_dir": "examples/tumor_chip_linear_gradient/data/cases/run_opposing_none_H200_1776929298815",
+        "topology": "opposing"
+      },
+      "objective": 0.8689426829892196,
+      "raw_L2": 0.8689426829892196,
+      "constraints": [
+        0.39908244607211374,
+        1.5009175539278863,
+        -0.01821428571428571
+      ],
+      "feasible": false,
+      "wall_time_s": 11.848444417119026
+    },
+    {
+      "params": {
+        "W": 1914.834988117218,
+        "d_p": 250.0,
+        "s_p": 600.0,
+        "theta": 53.44771385192871,
+        "Q_total": 5.970782679505646,
+        "r_flow": 0.8230897426605225,
+        "delta_W": 0.14988494634628297,
+        "Q": 5.970782679505646
+      },
+      "metrics": {
+        "L2_to_target": 0.9134110405650734,
+        "grad_sharpness": 37.8581712570564,
+        "monotonicity": 0.5885836486264188,
+        "cv_tau": 0.4463465709315646,
+        "tau_mean": 0.15843607437717755,
+        "tau_min": 0.003907846707525746,
+        "tau_max": 0.2857401638179585,
+        "f_dead": 0.05197368421052632,
+        "delta_p": 0.0,
+        "converged": true,
+        "C_mean": 0.7258457687876573,
+        "C_std": 0.3945674003990677,
+        "converged_U": true,
+        "converged_C": true,
+        "mesh_ok": true,
+        "mesh_strategy_requested": "blockMesh",
+        "mesh_strategy_used": "blockMesh",
+        "mesh_checkmesh_ok": true,
+        "mesh_used_fallback": false,
+        "mesh_checkmesh_summary": {
+          "failed_checks": null,
+          "max_non_ortho": 0.0,
+          "concave_cells": null
+        },
+        "warnings": [],
+        "case_dir": "examples/tumor_chip_linear_gradient/data/cases/run_opposing_none_H200_1776929316642",
+        "topology": "opposing"
+      },
+      "objective": 0.9134110405650734,
+      "raw_L2": 0.9134110405650734,
+      "constraints": [
+        0.058436074377177544,
+        1.8415639256228225,
+        -0.001973684210526315
+      ],
+      "feasible": false,
+      "wall_time_s": 11.573306333972141
+    },
+    {
+      "params": {
+        "W": 2484.437370300293,
+        "d_p": 250.0,
+        "s_p": 600.0,
+        "theta": 56.368982791900635,
+        "Q_total": 7.922305418178439,
+        "r_flow": 0.8816841125488282,
+        "delta_W": 0.29358927011489866,
+        "Q": 7.922305418178439
+      },
+      "metrics": {
+        "L2_to_target": 0.8579595319659667,
+        "grad_sharpness": 37.18782613031251,
+        "monotonicity": 0.5355274907513713,
+        "cv_tau": 0.5136948320097136,
+        "tau_mean": 0.16180693081883812,
+        "tau_min": 8.915896291211804e-05,
+        "tau_max": 0.43239472659341366,
+        "f_dead": 0.05829081632653061,
+        "delta_p": 0.0,
+        "converged": true,
+        "C_mean": 0.739366552314602,
+        "C_std": 0.3740482239725013,
+        "converged_U": true,
+        "converged_C": true,
+        "mesh_ok": true,
+        "mesh_strategy_requested": "blockMesh",
+        "mesh_strategy_used": "blockMesh",
+        "mesh_checkmesh_ok": true,
+        "mesh_used_fallback": false,
+        "mesh_checkmesh_summary": {
+          "failed_checks": null,
+          "max_non_ortho": 0.0,
+          "concave_cells": null
+        },
+        "warnings": [],
+        "case_dir": "examples/tumor_chip_linear_gradient/data/cases/run_opposing_none_H200_1776929333914",
+        "topology": "opposing"
+      },
+      "objective": 0.8579595319659667,
+      "raw_L2": 0.8579595319659667,
+      "constraints": [
+        0.06180693081883812,
+        1.8381930691811619,
+        -0.008290816326530608
+      ],
+      "feasible": false,
+      "wall_time_s": 19.453845041804016
+    },
+    {
+      "params": {
+        "W": 2426.5777230262756,
+        "d_p": 250.0,
+        "s_p": 600.0,
+        "theta": 64.09703135490417,
+        "Q_total": 17.934735156595707,
+        "r_flow": 0.8157835960388183,
+        "delta_W": 0.3919483470916748,
+        "Q": 17.934735156595707
+      },
+      "metrics": {
+        "L2_to_target": 0.7935434121776967,
+        "grad_sharpness": 40.157576033014095,
+        "monotonicity": 0.5245740899620052,
+        "cv_tau": 0.6820565846035856,
+        "tau_mean": 0.3619626519828834,
+        "tau_min": 0.00014440767115630278,
+        "tau_max": 1.2674412446592085,
+        "f_dead": 0.1204656862745098,
+        "delta_p": 0.0,
+        "converged": true,
+        "C_mean": 0.6261303607642583,
+        "C_std": 0.41769118178448517,
+        "converged_U": true,
+        "converged_C": true,
+        "mesh_ok": true,
+        "mesh_strategy_requested": "blockMesh",
+        "mesh_strategy_used": "blockMesh",
+        "mesh_checkmesh_ok": true,
+        "mesh_used_fallback": false,
+        "mesh_checkmesh_summary": {
+          "failed_checks": null,
+          "max_non_ortho": 0.0,
+          "concave_cells": null
+        },
+        "warnings": [],
+        "case_dir": "examples/tumor_chip_linear_gradient/data/cases/run_opposing_none_H200_1776929359076",
+        "topology": "opposing"
+      },
+      "objective": 0.7935434121776967,
+      "raw_L2": 0.7935434121776967,
+      "constraints": [
+        0.2619626519828834,
+        1.6380373480171166,
+        -0.0704656862745098
+      ],
+      "feasible": false,
+      "wall_time_s": 22.384641291806474
+    },
+    {
+      "params": {
+        "W": 2652.079939842224,
+        "d_p": 250.0,
+        "s_p": 600.0,
+        "theta": 56.20525360107422,
+        "Q_total": 5.12541024480015,
+        "r_flow": 0.8620617866516114,
+        "delta_W": 0.280143518447876,
+        "Q": 5.12541024480015
+      },
+      "metrics": {
+        "L2_to_target": 0.9083593936772545,
+        "grad_sharpness": 39.354952118676344,
+        "monotonicity": 0.5508739437434889,
+        "cv_tau": 0.4892005137820607,
+        "tau_mean": 0.09672219417995394,
+        "tau_min": 0.000827448731700635,
+        "tau_max": 0.23328731618985754,
+        "f_dead": 0.041666666666666664,
+        "delta_p": 0.0,
+        "converged": true,
+        "C_mean": 0.7250847868695841,
+        "C_std": 0.4027084288228326,
+        "converged_U": true,
+        "converged_C": true,
+        "mesh_ok": true,
+        "mesh_strategy_requested": "blockMesh",
+        "mesh_strategy_used": "blockMesh",
+        "mesh_checkmesh_ok": true,
+        "mesh_used_fallback": false,
+        "mesh_checkmesh_summary": {
+          "failed_checks": null,
+          "max_non_ortho": 0.0,
+          "concave_cells": null
+        },
+        "warnings": [],
+        "case_dir": "examples/tumor_chip_linear_gradient/data/cases/run_opposing_none_H200_1776929387635",
+        "topology": "opposing"
+      },
+      "objective": 0.9083593936772545,
+      "raw_L2": 0.9083593936772545,
+      "constraints": [
+        -0.0032778058200460675,
+        1.9032778058200461,
+        0.008333333333333338
+      ],
+      "feasible": false,
+      "wall_time_s": 20.111417999956757
+    },
+    {
+      "params": {
+        "W": 2442.7403926849365,
+        "d_p": 250.0,
+        "s_p": 600.0,
+        "theta": 58.46308708190918,
+        "Q_total": 12.637444045394659,
+        "r_flow": 0.8537101268768311,
+        "delta_W": 0.23104796051979065,
+        "Q": 12.637444045394659
+      },
+      "metrics": {
+        "L2_to_target": 0.8365204060095789,
+        "grad_sharpness": 42.07991978087501,
+        "monotonicity": 0.5582344686822299,
+        "cv_tau": 0.556935983873159,
+        "tau_mean": 0.2630692011877461,
+        "tau_min": 7.022405517373667e-05,
+        "tau_max": 0.7327323725909035,
+        "f_dead": 0.07576530612244899,
+        "delta_p": 0.0,
+        "converged": true,
+        "C_mean": 0.6980974609159626,
+        "C_std": 0.3990211615566529,
+        "converged_U": true,
+        "converged_C": true,
+        "mesh_ok": true,
+        "mesh_strategy_requested": "blockMesh",
+        "mesh_strategy_used": "blockMesh",
+        "mesh_checkmesh_ok": true,
+        "mesh_used_fallback": false,
+        "mesh_checkmesh_summary": {
+          "failed_checks": null,
+          "max_non_ortho": 0.0,
+          "concave_cells": null
+        },
+        "warnings": [],
+        "case_dir": "examples/tumor_chip_linear_gradient/data/cases/run_opposing_none_H200_1776929413693",
+        "topology": "opposing"
+      },
+      "objective": 0.8365204060095789,
+      "raw_L2": 0.8365204060095789,
+      "constraints": [
+        0.16306920118774612,
+        1.7369307988122538,
+        -0.025765306122448983
+      ],
+      "feasible": false,
+      "wall_time_s": 20.36942124995403
+    },
+    {
+      "params": {
+        "W": 2468.68314743042,
+        "d_p": 250.0,
+        "s_p": 600.0,
+        "theta": 49.82797980308533,
+        "Q_total": 13.886360861361027,
+        "r_flow": 0.7874291896820068,
+        "delta_W": 0.17642572402954101,
+        "Q": 13.886360861361027
+      },
+      "metrics": {
+        "L2_to_target": 0.8802569416247524,
+        "grad_sharpness": 49.18704421927191,
+        "monotonicity": 0.5533869115958668,
+        "cv_tau": 0.5455474757810013,
+        "tau_mean": 0.2807462256309567,
+        "tau_min": 7.580774305133669e-05,
+        "tau_max": 0.7421363971974768,
+        "f_dead": 0.06760204081632654,
+        "delta_p": 0.0,
+        "converged": true,
+        "C_mean": 0.643473149145895,
+        "C_std": 0.43860142327870477,
+        "converged_U": true,
+        "converged_C": true,
+        "mesh_ok": true,
+        "mesh_strategy_requested": "blockMesh",
+        "mesh_strategy_used": "blockMesh",
+        "mesh_checkmesh_ok": true,
+        "mesh_used_fallback": false,
+        "mesh_checkmesh_summary": {
+          "failed_checks": null,
+          "max_non_ortho": 0.0,
+          "concave_cells": null
+        },
+        "warnings": [],
+        "case_dir": "examples/tumor_chip_linear_gradient/data/cases/run_opposing_none_H200_1776929439337",
+        "topology": "opposing"
+      },
+      "objective": 0.8802569416247524,
+      "raw_L2": 0.8802569416247524,
+      "constraints": [
+        0.1807462256309567,
+        1.7192537743690433,
+        -0.017602040816326534
+      ],
+      "feasible": false,
+      "wall_time_s": 19.41737495898269
+    },
+    {
+      "params": {
+        "W": 1830.4808557033539,
+        "d_p": 250.0,
+        "s_p": 600.0,
+        "theta": 23.84205400943756,
+        "Q_total": 24.60932534188032,
+        "r_flow": 0.7814712047576905,
+        "delta_W": 0.17052806735038756,
+        "Q": 24.60932534188032
+      },
+      "metrics": {
+        "L2_to_target": 0.8851726528739928,
+        "grad_sharpness": 48.112866712140594,
+        "monotonicity": 0.5770098975516583,
+        "cv_tau": 0.5247115325741634,
+        "tau_mean": 0.6693549318180476,
+        "tau_min": 5.198977495702709e-05,
+        "tau_max": 1.5363711814511318,
+        "f_dead": 0.065625,
+        "delta_p": 0.0,
+        "converged": true,
+        "C_mean": 0.6464553153698602,
+        "C_std": 0.436102962517374,
+        "converged_U": true,
+        "converged_C": true,
+        "mesh_ok": true,
+        "mesh_strategy_requested": "blockMesh",
+        "mesh_strategy_used": "blockMesh",
+        "mesh_checkmesh_ok": true,
+        "mesh_used_fallback": false,
+        "mesh_checkmesh_summary": {
+          "failed_checks": null,
+          "max_non_ortho": 0.0,
+          "concave_cells": null
+        },
+        "warnings": [],
+        "case_dir": "examples/tumor_chip_linear_gradient/data/cases/run_opposing_none_H200_1776929464498",
+        "topology": "opposing"
+      },
+      "objective": 0.8851726528739928,
+      "raw_L2": 0.8851726528739928,
+      "constraints": [
+        0.5693549318180476,
+        1.3306450681819524,
+        -0.015625
+      ],
+      "feasible": false,
+      "wall_time_s": 12.056064291158691
+    }
+  ],
+  "train_X": [
+    [
+      0.8507139682769775,
+      0.5,
+      0.5,
+      0.3947157561779022,
+      0.07760211080312729,
+      0.38172784447669983,
+      0.5951264500617981
+    ],
+    [
+      0.06891562789678574,
+      0.5,
+      0.5,
+      0.7678464651107788,
+      0.8174551725387573,
+      0.7870210409164429,
+      0.30626732110977173
+    ],
+    [
+      0.44934481382369995,
+      0.5,
+      0.5,
+      0.12334276735782623,
+      0.5397967100143433,
+      0.522924542427063,
+      0.9192996621131897
+    ],
+    [
+      0.7319995760917664,
+      0.5,
+      0.5,
+      0.7424148917198181,
+      0.2838303744792938,
+      0.17621982097625732,
+      0.23990659415721893
+    ],
+    [
+      0.5762629508972168,
+      0.5,
+      0.5,
+      0.5965290665626526,
+      0.42712393403053284,
+      0.3456314504146576,
+      0.8640626668930054
+    ],
+    [
+      0.359037846326828,
+      0.5,
+      0.5,
+      0.22332213819026947,
+      0.6867519021034241,
+      0.9403315782546997,
+      0.04319069907069206
+    ],
+    [
+      0.22372156381607056,
+      0.5,
+      0.5,
+      0.8834429979324341,
+      0.95596843957901,
+      0.734829306602478,
+      0.680637001991272
+    ],
+    [
+      0.9420433640480042,
+      0.5,
+      0.5,
+      0.26447775959968567,
+      0.21147717535495758,
+      0.08152925968170166,
+      0.46880388259887695
+    ],
+    [
+      0.6759033203125,
+      0.5,
+      0.5,
+      0.14646531641483307,
+      0.27049630880355835,
+      0.8497885465621948,
+      0.7004396915435791
+    ],
+    [
+      0.6693882942199707,
+      0.5,
+      0.5,
+      0.243159681558609,
+      0.381753534078598,
+      0.4442960321903229,
+      0.5566895008087158
+    ],
+    [
+      0.5402804017066956,
+      0.5,
+      0.5,
+      0.6708328127861023,
+      0.028523758053779602,
+      0.8845831155776978,
+      0.20876044034957886
+    ],
+    [
+      0.5554054379463196,
+      0.5,
+      0.5,
+      0.7203656435012817,
+      0.3262627124786377,
+      0.8162630200386047,
+      0.3344133496284485
+    ],
+    [
+      0.28510692715644836,
+      0.5,
+      0.5,
+      0.5696311593055725,
+      0.06251762062311172,
+      0.9554464817047119,
+      0.34453466534614563
+    ],
+    [
+      0.39713054895401,
+      0.5,
+      0.5,
+      0.6407952308654785,
+      0.00497837271541357,
+      0.9038621783256531,
+      0.10673195123672485
+    ],
+    [
+      0.7135763168334961,
+      0.5,
+      0.5,
+      0.6894830465316772,
+      0.014986181631684303,
+      0.9771051406860352,
+      0.619961678981781
+    ],
+    [
+      0.6814320683479309,
+      0.5,
+      0.5,
+      0.8182838559150696,
+      0.06633197516202927,
+      0.894729495048523,
+      0.9712440967559814
+    ],
+    [
+      0.8067110776901245,
+      0.5,
+      0.5,
+      0.6867542266845703,
+      0.0006431294605135918,
+      0.9525772333145142,
+      0.5719411373138428
+    ],
+    [
+      0.6904113292694092,
+      0.5,
+      0.5,
+      0.7243847846984863,
+      0.03916637971997261,
+      0.9421376585960388,
+      0.3965998589992523
+    ],
+    [
+      0.7048239707946777,
+      0.5,
+      0.5,
+      0.5804663300514221,
+      0.04557108134031296,
+      0.8592864871025085,
+      0.20152044296264648
+    ],
+    [
+      0.3502671420574188,
+      0.5,
+      0.5,
+      0.14736756682395935,
+      0.10056064277887344,
+      0.851839005947113,
+      0.18045738339424133
+    ]
+  ],
+  "train_Y": [
+    0.9894521162553643,
+    0.9262196134525394,
+    0.9079386629632535,
+    0.9929954472116146,
+    0.9852706318109249,
+    0.8068798519774334,
+    0.9103111299180684,
+    0.8935860531690923,
+    0.8684438934582913,
+    0.9744035777310216,
+    0.8999003664946524,
+    0.8944640823699637,
+    0.8689426829892196,
+    0.9134110405650734,
+    0.8579595319659667,
+    0.7935434121776967,
+    0.9083593936772545,
+    0.8365204060095789,
+    0.8802569416247524,
+    0.8851726528739928
+  ],
+  "train_constraints": [
+    [
+      0.26566992128305755,
+      1.6343300787169426,
+      0.015681818181818186
+    ],
+    [
+      6.112399545852116,
+      -4.212399545852116,
+      0.01428571428571429
+    ],
+    [
+      2.531939904239163,
+      -0.6319399042391631,
+      -0.014680232558139536
+    ],
+    [
+      1.1240273340470868,
+      0.7759726659529131,
+      -0.18272058823529413
+    ],
+    [
+      1.823617300208452,
+      0.07638269979154799,
+      -0.028124999999999997
+    ],
+    [
+      3.8945816300380227,
+      -1.9945816300380228,
+      -0.12894736842105264
+    ],
+    [
+      5.595166044393545,
+      -3.6951660443935443,
+      -0.02830882352941176
+    ],
+    [
+      0.812034294244765,
+      1.087965705755235,
+      -0.06732456140350877
+    ],
+    [
+      1.1190386039778368,
+      0.7809613960221631,
+      -0.15522959183673468
+    ],
+    [
+      1.5517110089053059,
+      0.348288991094694,
+      0.0062500000000000056
+    ],
+    [
+      0.14487239141424474,
+      1.7551276085857552,
+      -0.002698863636363631
+    ],
+    [
+      1.4526684471709892,
+      0.4473315528290107,
+      -0.11944444444444445
+    ],
+    [
+      0.39908244607211374,
+      1.5009175539278863,
+      -0.01821428571428571
+    ],
+    [
+      0.058436074377177544,
+      1.8415639256228225,
+      -0.001973684210526315
+    ],
+    [
+      0.06180693081883812,
+      1.8381930691811619,
+      -0.008290816326530608
+    ],
+    [
+      0.2619626519828834,
+      1.6380373480171166,
+      -0.0704656862745098
+    ],
+    [
+      -0.0032778058200460675,
+      1.9032778058200461,
+      0.008333333333333338
+    ],
+    [
+      0.16306920118774612,
+      1.7369307988122538,
+      -0.025765306122448983
+    ],
+    [
+      0.1807462256309567,
+      1.7192537743690433,
+      -0.017602040816326534
+    ],
+    [
+      0.5693549318180476,
+      1.3306450681819524,
+      -0.015625
+    ]
+  ]
+}

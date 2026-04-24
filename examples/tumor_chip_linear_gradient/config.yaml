@@ -1,0 +1,63 @@
+# Example: inverse design against a linear concentration gradient.
+#
+# Inherits all defaults from configs/default_config.yaml and only overrides
+# the target profile + a shrunken BO budget so the example runs in ~15 min
+# instead of ~12 h.  Swap back to the default budget for a full campaign.
+
+target_profile:
+  kind: linear_gradient
+  axis: x
+  c_high: 1.0
+  c_low: 0.0
+
+# Narrow the search region so Sobol doesn't waste evaluations on chambers
+# that are geometrically too small to host two 500 μm inlets (opposing
+# topology requires W >= 2*W_INLET_MM ≈ 1 mm).  Keeps all 8+12 evals
+# productive in the 15-minute budget.  Shallow merge in run.py replaces
+# the whole continuous_bounds block, so all seven params are listed.
+continuous_bounds:
+  W:
+    min: 1200
+    max: 3000
+  d_p:
+    min: 100
+    max: 400
+  s_p:
+    min: 200
+    max: 1000
+  theta:
+    min: 15
+    max: 75
+  Q_total:
+    min: 5
+    max: 200
+  r_flow:
+    min: 0.1
+    max: 0.9
+  delta_W:
+    min: 0.12
+    max: 0.40
+
+optimization:
+  n_sobol_init: 8
+  n_bo_iterations: 12
+  total_per_config: 20
+  constraints:
+    tau_mean_min: 0.1
+    tau_mean_max: 2.0
+    f_dead_max: 0.05
+  penalty_L2: 99.0
+  penalty_cv_tau: 999.0
+
+discrete_levels:
+  pillar_config: ["none"]
+  chamber_height: [200]
+  inlet_topology: ["opposing"]
+
+paths:
+  template_case: "ooc_optimizer/cfd/template"
+  stl_output_dir: "examples/tumor_chip_linear_gradient/data/stl"
+  case_output_dir: "examples/tumor_chip_linear_gradient/data/cases"
+  results_dir: "examples/tumor_chip_linear_gradient/data/results"
+  evaluation_log: "examples/tumor_chip_linear_gradient/data/results/evaluations.jsonl"
+  figures_dir: "examples/tumor_chip_linear_gradient/data/figures"

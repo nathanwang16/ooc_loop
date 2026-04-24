@@ -10,4 +10,4 @@ Pipeline stages:
     5. validation — 3D CFD and experimental data analysis
 """
 
-__version__ = "0.1.0"
+__version__ = "0.6.0"

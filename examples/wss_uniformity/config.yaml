@@ -1,0 +1,71 @@
+# Example: retained v1 WSS-uniformity campaign.
+#
+# Demonstrates that the v2 engine is general-purpose — the same CFD /
+# meshing / BO / plotting stack that inverse-designs drug-gradient
+# chambers can be re-targeted at a completely different scalar (floor
+# wall-shear stress) with no code changes, only a config swap.
+#
+# Uses the v1 single-inlet bounds (r_flow, delta_W are filled in with
+# harmless defaults by ooc_optimizer.config.schema._normalize_legacy_fields)
+# so the JSONL log from v1 campaigns replays unchanged.
+
+fixed_parameters:
+  chamber_length_um: 10000
+  inlet_width_um: 500
+  fluid_viscosity_Pa_s: 0.001
+  fluid_density_kg_m3: 1000
+
+continuous_bounds:
+  W:
+    min: 500
+    max: 3000
+  d_p:
+    min: 100
+    max: 400
+  s_p:
+    min: 200
+    max: 1000
+  theta:
+    min: 15
+    max: 75
+  Q:   # accepted as an alias for Q_total
+    min: 5
+    max: 200
+
+discrete_levels:
+  pillar_config: ["none", "1x4", "2x4", "3x6"]
+  chamber_height: [200, 300]
+
+solver_settings:
+  convergence_criterion: 1.0e-6
+  max_iterations: 2000
+  mesh_resolution: 1
+  solver_timeout_s: 300
+
+optimization:
+  n_sobol_init: 15
+  n_bo_iterations: 35
+  total_per_config: 50
+  constraints:
+    tau_mean_min: 0.5
+    tau_mean_max: 2.0
+    f_dead_max: 0.05
+  penalty_L2: 99.0
+  penalty_cv_tau: 999.0
+
+paths:
+  template_case: "ooc_optimizer/cfd/template"
+  stl_output_dir: "examples/wss_uniformity/data/stl"
+  case_output_dir: "examples/wss_uniformity/data/cases"
+  results_dir: "examples/wss_uniformity/data/results"
+  evaluation_log: "examples/wss_uniformity/data/results/evaluations.jsonl"
+  figures_dir: "examples/wss_uniformity/data/figures"
+
+baseline:
+  W: 1500
+  d_p: 0
+  s_p: 0
+  theta: 90
+  Q: 50
+  pillar_config: "none"
+  H: 200

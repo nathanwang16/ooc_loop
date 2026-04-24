@@ -20,6 +20,13 @@ def __getattr__(name):
     if name == "run_all_configurations":
         from ooc_optimizer.optimization.orchestrator import run_all_configurations
         return run_all_configurations
+    if name == "run_multi_target_workflow":
+        from ooc_optimizer.optimization.orchestrator import run_multi_target_workflow
+        return run_multi_target_workflow
     raise AttributeError(f"module {__name__!r} has no attribute {name!r}")
 
-__all__ = ["BORunner", "run_all_configurations"]
+__all__ = [
+    "BORunner",
+    "run_all_configurations",
+    "run_multi_target_workflow",
+]

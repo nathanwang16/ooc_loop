@@ -1,0 +1,44 @@
+#
+# docker-compose.yml — two services for the most common workflows.
+#
+#   tumor-chip-cli : run a one-shot `tumor-chip ...` command inside the image
+#                    with the repository mounted at /workspace.  Example:
+#                       docker compose run --rm tumor-chip-cli version
+#                       docker compose run --rm tumor-chip-cli \\
+#                           optimize --config configs/default_config.yaml
+#
+#   tumor-chip-shell : interactive shell inside the image with OpenFOAM
+#                      sourced and the package installed.
+#
+
+version: "3.9"
+
+services:
+  tumor-chip-cli:
+    build:
+      context: ..
+      dockerfile: docker/Dockerfile
+    image: ghcr.io/ooc-loop/tumor-chip-design:latest
+    working_dir: /workspace
+    volumes:
+      - ..:/workspace
+      # Persist BO / CFD output on the host.
+      - ../data:/workspace/data
+    environment:
+      - PYTHONPATH=/workspace
+    entrypoint: ["tumor-chip"]
+
+  tumor-chip-shell:
+    build:
+      context: ..
+      dockerfile: docker/Dockerfile
+    image: ghcr.io/ooc-loop/tumor-chip-design:latest
+    working_dir: /workspace
+    volumes:
+      - ..:/workspace
+      - ../data:/workspace/data
+    environment:
+      - PYTHONPATH=/workspace
+    entrypoint: ["bash"]
+    stdin_open: true
+    tty: true

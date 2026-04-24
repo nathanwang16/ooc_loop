@@ -16,6 +16,10 @@ torch>=2.1.0
 
 # Configuration
 pyyaml>=6.0
+pydantic>=2.6
+
+# Interpretability (Module 3.3)
+SALib>=1.5
 
 # Plotting and visualization
 matplotlib>=3.7.0

@@ -1,0 +1,44 @@
+cff-version: 1.2.0
+message: >-
+  If you use this software, please cite it using the metadata below. GitHub
+  renders a "Cite this repository" button automatically from this file.
+title: "tumor-chip-design: interpretable inverse design of tumor-on-chip chambers"
+abstract: >-
+  Open-source Python pipeline that couples CadQuery parametric geometry,
+  OpenFOAM momentum + passive-scalar CFD, BoTorch Bayesian optimisation,
+  and a Sobol / GP-gradient / tolerance-interval interpretability layer to
+  discover tumor-on-chip chamber geometries whose steady-state drug / tracer
+  concentration fields match a user-specified target profile, and to report
+  the fabrication tolerances needed to reproduce that field.
+type: software
+authors:
+  - family-names: "Dev A"
+    given-names: "Dev A"
+  - family-names: "Dev B"
+    given-names: "Dev B"
+repository-code: "https://github.com/ooc-loop/tumor-chip-design"
+license: MIT
+version: "0.6.0"
+date-released: "2026-04-22"
+keywords:
+  - organ-on-chip
+  - tumor-on-chip
+  - microfluidics
+  - CFD
+  - OpenFOAM
+  - Bayesian optimization
+  - inverse design
+  - interpretability
+  - Sobol indices
+references:
+  - type: article
+    title: >-
+      Interpretable inverse design of tumor-on-chip chambers: learned
+      surrogates reveal which geometric features control drug gradients and
+      by how much
+    year: 2026
+    authors:
+      - family-names: "Dev A"
+      - family-names: "Dev B"
+    journal: "Lab on a Chip"
+    status: in-preparation

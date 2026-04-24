@@ -1,0 +1,56 @@
+FoamFile
+{
+    version     2.0;
+    format      ascii;
+    class       volScalarField;
+    object      T;
+}
+
+// Passive scalar tracer field (drug / tracer concentration).
+// Injected at runtime by ooc_optimizer.cfd.scalar when the two-inlet
+// topology is used. Patch names below match the v2 patch-naming contract:
+//   inlet_drug   — fixedValue (C = 1)
+//   inlet_medium — fixedValue (C = 0)
+//   outlet       — zeroGradient
+//   walls, floor — zeroGradient (no flux; cell consumption handled via
+//                  sensitivity sweeps, not in the forward solve)
+//   frontAndBack — empty (one-cell-thick 2D slab)
+
+dimensions      [0 0 0 0 0 0 0];
+
+internalField   uniform 0;
+
+boundaryField
+{
+    inlet_drug
+    {
+        type            fixedValue;
+        value           uniform 1;
+    }
+
+    inlet_medium
+    {
+        type            fixedValue;
+        value           uniform 0;
+    }
+
+    outlet
+    {
+        type            zeroGradient;
+    }
+
+    walls
+    {
+        type            zeroGradient;
+    }
+
+    floor
+    {
+        type            zeroGradient;
+    }
+
+    frontAndBack
+    {
+        type            empty;
+    }
+}

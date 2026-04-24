@@ -1,0 +1,36 @@
+# Example: bimodal (rim + rim) target profile.
+#
+# Uses the same small BO budget as the linear-gradient example so the
+# runtime is comparable (~15 minutes on 8 cores).
+
+target_profile:
+  kind: bimodal
+  peak_axis: x
+  peak_fracs: [0.25, 0.75]
+  width_frac: 0.1
+  c_peak: 1.0
+  c_base: 0.0
+
+optimization:
+  n_sobol_init: 8
+  n_bo_iterations: 12
+  total_per_config: 20
+  constraints:
+    tau_mean_min: 0.1
+    tau_mean_max: 2.0
+    f_dead_max: 0.05
+  penalty_L2: 99.0
+  penalty_cv_tau: 999.0
+
+discrete_levels:
+  pillar_config: ["none"]
+  chamber_height: [200]
+  inlet_topology: ["opposing"]
+
+paths:
+  template_case: "ooc_optimizer/cfd/template"
+  stl_output_dir: "examples/tumor_chip_bimodal/data/stl"
+  case_output_dir: "examples/tumor_chip_bimodal/data/cases"
+  results_dir: "examples/tumor_chip_bimodal/data/results"
+  evaluation_log: "examples/tumor_chip_bimodal/data/results/evaluations.jsonl"
+  figures_dir: "examples/tumor_chip_bimodal/data/figures"
