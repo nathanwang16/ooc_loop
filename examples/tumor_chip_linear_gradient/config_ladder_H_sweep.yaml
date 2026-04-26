@@ -1,0 +1,76 @@
+# Ladder-only H-sweep against a linear concentration gradient (axis=y).
+#
+# Inherits from configs/default_config.yaml and overrides target profile,
+# bounds, and BO budget.
+#
+# Purpose: relax the PDMS-collapse aspect-ratio cap (AR_max=15) by enabling
+# H=300 μm in addition to the production H=200 μm. At H=300, AR=15 allows
+# W up to 4500 μm — matching the upper W bound — vs W<=3000 at H=200.
+# Phase-2 unconstrained-ladder analysis predicted the H=300 optimum lands
+# near W≈4500, L2≈0.069, which would beat the current production winner
+# (ladder, H=200, W=3000, L2=0.0818).
+#
+# Two BO jobs (ladder × H∈{200,300}) × 200 evals = 400 forward solves.
+
+target_profile:
+  kind: linear_gradient
+  axis: y
+  c_high: 1.0
+  c_low: 0.0
+
+# Search box widened above run-2's boundary-pinned optimum.  W: was 1200..3000
+# (x*=2987 hit upper). r_flow: was 0.1..0.9 (x*=0.877 near upper). delta_W:
+# was 0.12..0.40 (x*=0.35 near upper).  All three now have headroom on the
+# upward side.  Lower bounds preserved so feasibility ratio doesn't collapse.
+continuous_bounds:
+  W:
+    min: 1500
+    max: 4500
+  d_p:
+    min: 100
+    max: 400
+  s_p:
+    min: 200
+    max: 1000
+  theta:
+    min: 15
+    max: 75
+  Q_total:
+    min: 5
+    max: 200
+  r_flow:
+    min: 0.10
+    max: 0.97
+  delta_W:
+    min: 0.12
+    max: 0.48
+
+optimization:
+  n_sobol_init: 24
+  n_bo_iterations: 176
+  total_per_config: 200
+  batch_size: 4               # 4 concurrent CFD per BORunner
+  max_concurrent_cfd: 8       # outer workers = 8 // 4 = 2 configs in parallel
+  constraints:
+    tau_mean_min: 0.1
+    tau_mean_max: 2.0
+    f_dead_max: 0.08
+    Re_max: 100.0             # laminar gate (safety rail; rarely binds at our Q)
+    aspect_ratio_max: 15.0    # PDMS-collapse gate (10–20 literature; W cap = 3000 μm at H=200, W cap = 4500 μm at H=300)
+  penalty_L2: 99.0
+  penalty_cv_tau: 999.0
+
+# Ladder topology only; H sweep across {200, 300} μm.
+# Per-(topology,H) budget = 200 evals; total = 2 × 200 = 400 forward solves.
+discrete_levels:
+  pillar_config: ["none"]
+  chamber_height: [200, 300]
+  inlet_topology: ["ladder"]
+
+paths:
+  template_case: "ooc_optimizer/cfd/template"
+  stl_output_dir: "examples/tumor_chip_linear_gradient/data/stl"
+  case_output_dir: "examples/tumor_chip_linear_gradient/data/cases"
+  results_dir: "examples/tumor_chip_linear_gradient/data/results"
+  evaluation_log: "examples/tumor_chip_linear_gradient/data/results/evaluations.jsonl"
+  figures_dir: "examples/tumor_chip_linear_gradient/data/figures"

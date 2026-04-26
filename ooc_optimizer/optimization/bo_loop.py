@@ -360,15 +360,17 @@ class BORunner:
         c1 = float(metrics["tau_mean"] - self._constraint_config["tau_mean_min"])
         c2 = float(self._constraint_config["tau_mean_max"] - metrics["tau_mean"])
         c3 = float(self._constraint_config["f_dead_max"] - metrics["f_dead"])
-        # Laminar gate: NaN Re (geometry/CFD failure) maps to a large negative
-        # slack so the candidate is treated as infeasible without crashing.
+        # Laminar + aspect-ratio gates.  Any NaN that slipped through the
+        # PENALTY_METRICS / metrics-fallback paths is mapped to a large finite
+        # sentinel (not inf) so the constraint slack stays a finite negative
+        # number — BoTorch's ModelListGP refuses to fit on -inf or NaN.
         Re_val = float(metrics["Re"])
         if not (Re_val == Re_val):  # NaN
-            Re_val = float("inf")
+            Re_val = 1.0e6
         c4 = float(self._constraint_config["Re_max"] - Re_val)
         ar_val = float(metrics["aspect_ratio"])
         if not (ar_val == ar_val):
-            ar_val = float("inf")
+            ar_val = 1.0e3
         c5 = float(self._constraint_config["aspect_ratio_max"] - ar_val)
 
         record = {

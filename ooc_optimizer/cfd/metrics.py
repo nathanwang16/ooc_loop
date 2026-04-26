@@ -178,13 +178,16 @@ def extract_v2_metrics(
             "f_dead": 1.0,
             "delta_p": 0.0,
             "converged": False,
-            "C_mean": float("nan"),
-            "C_std": float("nan"),
-            "Re": float("nan"),
-            "Pe_streamwise": float("nan"),
-            "Pe_crossstream": float("nan"),
-            "aspect_ratio": float("nan"),
-            "R2_to_linear": float("nan"),
+            "C_mean": 0.0,
+            "C_std": 0.0,
+            # Same finite-sentinel rule as solver.PENALTY_METRICS — see comment
+            # there.  NaN here propagated into BoTorch and crashed the GP fit
+            # on the opposing topology mid-run on 2026-04-26.
+            "Re": 1.0e6,
+            "Pe_streamwise": 0.0,
+            "Pe_crossstream": 0.0,
+            "aspect_ratio": 1.0e3,
+            "R2_to_linear": 0.0,
         }
 
 

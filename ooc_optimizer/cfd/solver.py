@@ -50,11 +50,16 @@ PENALTY_METRICS: Dict[str, Any] = {
     "f_dead": 1.0,
     "delta_p": 0.0,
     "cv_tau": 999.0,  # retained for backward compatibility / diagnostics
-    "Re": float("nan"),
-    "Pe_streamwise": float("nan"),
-    "Pe_crossstream": float("nan"),
-    "aspect_ratio": float("nan"),
-    "R2_to_linear": float("nan"),
+    # Penalty values must be large FINITE (not NaN) so that c4=Re_max-Re and
+    # c5=aspect_ratio_max-aspect_ratio evaluate to large negative numbers
+    # (strongly infeasible) without poisoning the GP fit.  NaN here was the
+    # direct cause of the BoTorch InputDataError that crashed the opposing-
+    # topology BO mid-run on 2026-04-26.
+    "Re": 1.0e6,
+    "Pe_streamwise": 0.0,
+    "Pe_crossstream": 0.0,
+    "aspect_ratio": 1.0e3,
+    "R2_to_linear": 0.0,
     "converged_U": False,
     "converged_C": False,
     "converged": False,
