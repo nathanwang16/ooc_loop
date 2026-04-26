@@ -48,8 +48,23 @@ def extract_v2_metrics(
     chamber_length_m: float,
     chamber_width_m: float,
     target_profile: Optional[TargetProfile] = None,
+    rho_kg_m3: float,
+    diffusivity_m2_s: float,
 ) -> Dict[str, float]:
-    """Extract the v2 metric set from a fully solved OpenFOAM case."""
+    """Extract the v2 metric set from a fully solved OpenFOAM case.
+
+    Diagnostic dimensionless numbers are appended for cross-topology comparison:
+
+        Re              = rho * U_avg * D_h / mu               (laminar gate)
+        Pe_streamwise   = U_avg * L_chamber / D                 (axial advection vs diffusion)
+        Pe_crossstream  = U_avg * W_chamber / D                 (lateral mixing budget)
+        aspect_ratio    = W_chamber / H                         (PDMS-collapse gate)
+        R2_to_linear    = coefficient of determination from a 1D linear fit of the
+                          cell-binned C-mean profile against the target axis;
+                          NaN when target_profile is not a linear_gradient.
+
+    rho_kg_m3 and diffusivity_m2_s are required (no defaults) per project rule.
+    """
     case_dir = Path(case_dir)
 
     try:
@@ -81,10 +96,19 @@ def extract_v2_metrics(
         f_dead = _dead_fraction(U_mag_dev)
         delta_p = _pressure_drop(latest_time)
 
+        # Dimensionless physics diagnostics.
+        U_avg = float(np.mean(U_mag_dev)) if U_mag_dev.size else 0.0
+        D_h = (2.0 * H * chamber_width_m) / (H + chamber_width_m) if (H + chamber_width_m) > 0 else 0.0
+        Re = (rho_kg_m3 * U_avg * D_h) / mu if mu > 0 else float("nan")
+        Pe_streamwise = (U_avg * chamber_length_m) / diffusivity_m2_s if diffusivity_m2_s > 0 else float("nan")
+        Pe_crossstream = (U_avg * chamber_width_m) / diffusivity_m2_s if diffusivity_m2_s > 0 else float("nan")
+        aspect_ratio = chamber_width_m / H if H > 0 else float("nan")
+
         # Scalar-field diagnostics.
         L2 = float("nan")
         grad_sharp = float("nan")
         mono = float("nan")
+        R2_to_linear = float("nan")
         C_field = None
         t_file = latest_time / "T"
         if t_file.exists():
@@ -107,6 +131,18 @@ def extract_v2_metrics(
                     mono_axis = str(target_profile.params.get("axis", "x"))
                 mono = monotonicity_fraction(C_dev, centres_dev, axis=mono_axis)
 
+                # R²-to-linear: only meaningful when target itself is a linear
+                # gradient. Bin C along the target axis, fit y = a + b·xi, and
+                # report the coefficient of determination.
+                if target_profile.kind == "linear_gradient":
+                    R2_to_linear = _r2_to_linear(
+                        C_dev,
+                        centres_dev,
+                        axis=mono_axis,
+                        L=chamber_length_m,
+                        W=chamber_width_m,
+                    )
+
             grad_sharp = gradient_sharpness(C_dev, centres_dev, L=chamber_length_m)
 
         return {
@@ -122,6 +158,11 @@ def extract_v2_metrics(
             "converged": True,
             "C_mean": float(np.mean(C_field)) if C_field is not None else float("nan"),
             "C_std": float(np.std(C_field)) if C_field is not None else float("nan"),
+            "Re": float(Re),
+            "Pe_streamwise": float(Pe_streamwise),
+            "Pe_crossstream": float(Pe_crossstream),
+            "aspect_ratio": float(aspect_ratio),
+            "R2_to_linear": float(R2_to_linear),
         }
 
     except Exception as exc:
@@ -139,7 +180,55 @@ def extract_v2_metrics(
             "converged": False,
             "C_mean": float("nan"),
             "C_std": float("nan"),
+            "Re": float("nan"),
+            "Pe_streamwise": float("nan"),
+            "Pe_crossstream": float("nan"),
+            "aspect_ratio": float("nan"),
+            "R2_to_linear": float("nan"),
         }
+
+
+def _r2_to_linear(
+    C_dev: np.ndarray,
+    centres_dev: np.ndarray,
+    *,
+    axis: str,
+    L: float,
+    W: float,
+    n_bins: int = 30,
+) -> float:
+    """Bin C along the target axis, fit a + b*xi via polyfit, return R²."""
+    if axis == "y":
+        coord = centres_dev[:, 1]
+        extent = W
+    else:
+        coord = centres_dev[:, 0]
+        extent = L
+    if extent <= 0 or coord.size == 0:
+        return float("nan")
+    xi = coord / extent
+    edges = np.linspace(xi.min(), xi.max(), n_bins + 1)
+    bin_idx = np.digitize(xi, edges) - 1
+    bin_idx = np.clip(bin_idx, 0, n_bins - 1)
+    centres_bin = 0.5 * (edges[:-1] + edges[1:])
+    C_means: list = []
+    xi_means: list = []
+    for k in range(n_bins):
+        sel = bin_idx == k
+        if np.any(sel):
+            C_means.append(float(np.mean(C_dev[sel])))
+            xi_means.append(float(centres_bin[k]))
+    if len(C_means) < 3:
+        return float("nan")
+    xi_arr = np.array(xi_means)
+    C_arr = np.array(C_means)
+    coeffs = np.polyfit(xi_arr, C_arr, 1)
+    C_fit = np.polyval(coeffs, xi_arr)
+    ss_res = float(np.sum((C_arr - C_fit) ** 2))
+    ss_tot = float(np.sum((C_arr - C_arr.mean()) ** 2))
+    if ss_tot <= 0.0:
+        return float("nan")
+    return 1.0 - ss_res / ss_tot
 
 
 def _dead_fraction(U_mag: np.ndarray, threshold_ratio: float = 0.1) -> float:
@@ -175,6 +264,9 @@ def extract_metrics(case_dir: Path, H: float, mu: float, L_mm: float = 20.0) -> 
     Kept for backward compatibility with the v1 tests and the retained
     WSS-uniformity example.  Do not use in the v2 BO loop — call
     ``extract_v2_metrics`` instead.
+
+    Uses water-like rho/D (1000 kg/m³, 1e-10 m²/s) for the dimensionless
+    diagnostics — these legacy callers do not exercise the BO path.
     """
     return extract_v2_metrics(
         case_dir=case_dir,
@@ -183,4 +275,6 @@ def extract_metrics(case_dir: Path, H: float, mu: float, L_mm: float = 20.0) -> 
         chamber_length_m=L_mm * 1e-3,
         chamber_width_m=(L_mm / 10.0) * 1e-3,  # pragma: no cover (used only by legacy tests)
         target_profile=None,
+        rho_kg_m3=1000.0,
+        diffusivity_m2_s=1.0e-10,
     )

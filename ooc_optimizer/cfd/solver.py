@@ -22,6 +22,7 @@ import re
 import shutil
 import subprocess
 import time
+import uuid
 from pathlib import Path
 from typing import Any, Dict, Optional
 
@@ -49,6 +50,11 @@ PENALTY_METRICS: Dict[str, Any] = {
     "f_dead": 1.0,
     "delta_p": 0.0,
     "cv_tau": 999.0,  # retained for backward compatibility / diagnostics
+    "Re": float("nan"),
+    "Pe_streamwise": float("nan"),
+    "Pe_crossstream": float("nan"),
+    "aspect_ratio": float("nan"),
+    "R2_to_linear": float("nan"),
     "converged_U": False,
     "converged_C": False,
     "converged": False,
@@ -103,7 +109,13 @@ def evaluate_cfd(
     template_dir = Path(config["paths"]["template_dir"])
     work_dir.mkdir(parents=True, exist_ok=True)
 
-    case_name = f"run_{topology}_{pillar_config}_H{int(H_um)}_{int(time.time()*1000)}"
+    # Suffix combines ms-timestamp, PID, and a uuid4 fragment so concurrent
+    # workers / batched candidates that fire in the same millisecond never
+    # collide on the case-dir name (was a real failure mode at batch_size>=4).
+    case_name = (
+        f"run_{topology}_{pillar_config}_H{int(H_um)}_"
+        f"{int(time.time()*1000)}_{os.getpid()}_{uuid.uuid4().hex[:6]}"
+    )
     case_dir = work_dir / case_name
 
     try:
@@ -140,16 +152,45 @@ def evaluate_cfd(
 
         # ----- passive-scalar solve ----------------------------------------
         diffusivity = float(config.get("diffusivity", DEFAULT_DIFFUSIVITY_M2_S))
-        scalar_result = run_scalar_transport(
-            case_dir=case_dir,
-            diffusivity_m2_s=diffusivity,
-            c_drug=1.0,
-            c_medium=0.0,
-        )
+        if bm.inlet_names:
+            # Multi-inlet ladder: every strip carries its own fixedValue C_k.
+            # Build the patches dict for write_scalar_boundary_file so it
+            # doesn't try to write inlet_drug / inlet_medium (which don't
+            # exist on the ladder mesh) and crash the solver.
+            N = len(bm.inlet_names)
+            ladder_patches = {
+                name: f"fixedValue:{(k + 0.5) / N}"
+                for k, name in enumerate(bm.inlet_names)
+            }
+            ladder_patches.update({
+                "outlet": "zeroGradient",
+                "walls": "zeroGradient",
+                "floor": "zeroGradient",
+                "frontAndBack": _frontandback_type(pillar_config),
+            })
+            if pillar_config.lower() != "none":
+                ladder_patches["pillars"] = "zeroGradient"
+            scalar_result = run_scalar_transport(
+                case_dir=case_dir,
+                diffusivity_m2_s=diffusivity,
+                c_drug=1.0,
+                c_medium=0.0,  # ignored once patches= is supplied
+                patches=ladder_patches,
+            )
+        else:
+            scalar_result = run_scalar_transport(
+                case_dir=case_dir,
+                diffusivity_m2_s=diffusivity,
+                c_drug=1.0,
+                c_medium=0.0,
+            )
         converged_C = scalar_result.converged
 
         # ----- metric extraction -------------------------------------------
         mu = float(config["fixed_parameters"]["fluid_viscosity_Pa_s"])
+        if "fluid_density_kg_m3" not in config["fixed_parameters"]:
+            raise ValueError("Missing fixed_parameters.fluid_density_kg_m3 in config")
+        rho = float(config["fixed_parameters"]["fluid_density_kg_m3"])
         metrics = extract_v2_metrics(
             case_dir=case_dir,
             H=H_m,
@@ -157,6 +198,8 @@ def evaluate_cfd(
             chamber_length_m=bm.chamber_length_m,
             chamber_width_m=bm.chamber_width_m,
             target_profile=target_profile,
+            rho_kg_m3=rho,
+            diffusivity_m2_s=diffusivity,
         )
         metrics["converged_U"] = True
         metrics["converged_C"] = bool(converged_C)
@@ -200,7 +243,12 @@ def _setup_case(
     H_m: float,
     pillar_config: str,
 ):
-    """Copy template and inject topology-aware blockMeshDict + two-inlet BCs."""
+    """Copy template and inject topology-aware blockMeshDict + BCs.
+
+    Dispatches between the legacy two-inlet writers (opposing, same_side_Y,
+    asymmetric_lumen) and the multi-inlet writers (ladder) on the truthiness
+    of bm.inlet_names, leaving the two-inlet path completely untouched.
+    """
     if case_dir.exists():
         shutil.rmtree(case_dir)
     shutil.copytree(template_dir, case_dir)
@@ -214,7 +262,33 @@ def _setup_case(
     )
     (case_dir / "system" / "blockMeshDict").write_text(bm.content)
 
-    # -- momentum BCs --------------------------------------------------------
+    if bm.inlet_names:
+        # ---- Multi-inlet (ladder) BC path -----------------------------------
+        # Equal-area strips, equal flow split, midpoint C-convention. The
+        # midpoint C_k = (k+0.5)/N convention placed inlets on strip centres
+        # in Phase-1 and gave L2 ≈ 0.11 vs ≈ 0.18 for endpoint k/(N-1).
+        N = len(bm.inlet_names)
+        if N < 2:
+            raise ValueError(f"Multi-inlet topology has insufficient inlets: N={N}")
+        Q_total_m3s = float(params["Q_total"]) * 1e-9 / 60.0
+        Q_per_inlet = Q_total_m3s / N
+        triples = []
+        for k, (name, area) in enumerate(zip(bm.inlet_names, bm.inlet_areas_m2)):
+            if area <= 0:
+                raise ValueError(f"Inlet '{name}' has non-positive area {area}")
+            U_x = Q_per_inlet / area
+            C_value = (k + 0.5) / N
+            triples.append((name, (U_x, 0.0, 0.0), C_value))
+        _write_u_field_multi(case_dir / "0" / "U", triples, pillar_config=pillar_config)
+        _write_p_field_multi(case_dir / "0" / "p", [t[0] for t in triples], pillar_config=pillar_config)
+        _rewrite_scalar_template_multi(
+            case_dir / "0" / "T",
+            [(name, C) for name, _, C in triples],
+            pillar_config=pillar_config,
+        )
+        return bm
+
+    # ---- Legacy two-inlet path (untouched) --------------------------------
     Q_total_m3s = float(params["Q_total"]) * 1e-9 / 60.0
     r_flow = float(params["r_flow"])
     Q_drug = r_flow * Q_total_m3s
@@ -309,6 +383,135 @@ def _rewrite_scalar_template(t_path: Path, *, pillar_config: str) -> None:
             "    pillars\n    {\n        type            zeroGradient;\n    }\n\n    frontAndBack",
         )
     t_path.write_text(text)
+
+
+# ---------------------------------------------------------------------------
+# Multi-inlet (ladder) BC writers. Lifted from
+# scripts/diagnostic_ladder_baseline.py:write_u_field/write_p_field/write_t_field
+# (Phase-1 baseline that produced L2 ≈ 0.11). The pillar_config dispatch is
+# folded in so this path also handles the optional 'pillars' patch and the
+# frontAndBack empty→symmetry swap that the existing two-inlet writers apply.
+# ---------------------------------------------------------------------------
+
+
+def _frontandback_type(pillar_config: str) -> str:
+    return "symmetry" if pillar_config.lower() != "none" else "empty"
+
+
+def _write_u_field_multi(
+    u_path: Path,
+    triples,
+    *,
+    pillar_config: str,
+) -> None:
+    """0/U for N-inlet ladder: each triple is (name, (Ux,Uy,Uz), C_value)."""
+    fab = _frontandback_type(pillar_config)
+    pillar_block = ""
+    if pillar_config.lower() != "none":
+        pillar_block = "    pillars\n    {\n        type            noSlip;\n    }\n\n"
+    inlet_blocks = []
+    for name, U_vec, _C in triples:
+        inlet_blocks.append(
+            f"    {name}\n    {{\n        type            fixedValue;\n"
+            f"        value           uniform ({U_vec[0]:.6f} {U_vec[1]:.6f} {U_vec[2]:.6f});\n    }}\n\n"
+        )
+    content = (
+        "FoamFile\n{\n"
+        "    version     2.0;\n"
+        "    format      ascii;\n"
+        "    class       volVectorField;\n"
+        "    object      U;\n"
+        "}\n\n"
+        "dimensions      [0 1 -1 0 0 0 0];\n\n"
+        "internalField   uniform (0 0 0);\n\n"
+        "boundaryField\n{\n"
+        + "".join(inlet_blocks)
+        + "    outlet\n    {\n        type            zeroGradient;\n    }\n\n"
+        + "    walls\n    {\n        type            noSlip;\n    }\n\n"
+        + "    floor\n    {\n        type            noSlip;\n    }\n\n"
+        + pillar_block
+        + f"    frontAndBack\n    {{\n        type            {fab};\n    }}\n"
+        + "}\n"
+    )
+    u_path.write_text(content)
+
+
+def _write_p_field_multi(
+    p_path: Path,
+    inlet_names,
+    *,
+    pillar_config: str,
+) -> None:
+    """0/p for N-inlet ladder."""
+    fab = _frontandback_type(pillar_config)
+    pillar_block = ""
+    if pillar_config.lower() != "none":
+        pillar_block = "    pillars\n    {\n        type            zeroGradient;\n    }\n\n"
+    inlet_blocks = "".join(
+        f"    {n}\n    {{\n        type            zeroGradient;\n    }}\n\n"
+        for n in inlet_names
+    )
+    content = (
+        "FoamFile\n{\n"
+        "    version     2.0;\n"
+        "    format      ascii;\n"
+        "    class       volScalarField;\n"
+        "    object      p;\n"
+        "}\n\n"
+        "dimensions      [0 2 -2 0 0 0 0];\n\n"
+        "internalField   uniform 0;\n\n"
+        "boundaryField\n{\n"
+        + inlet_blocks
+        + "    outlet\n    {\n        type            fixedValue;\n        value           uniform 0;\n    }\n\n"
+        + "    walls\n    {\n        type            zeroGradient;\n    }\n\n"
+        + "    floor\n    {\n        type            zeroGradient;\n    }\n\n"
+        + pillar_block
+        + f"    frontAndBack\n    {{\n        type            {fab};\n    }}\n"
+        + "}\n"
+    )
+    p_path.write_text(content)
+
+
+def _rewrite_scalar_template_multi(
+    t_path: Path,
+    name_value_pairs,
+    *,
+    pillar_config: str,
+) -> None:
+    """0/T for N-inlet ladder: per-inlet fixedValue C_k.
+
+    The template ships with the two-inlet T file; for multi-inlet topologies
+    we overwrite it entirely (rather than patch-edit) since the two-inlet
+    inlet_drug / inlet_medium patch names don't exist in the ladder mesh.
+    """
+    fab = _frontandback_type(pillar_config)
+    pillar_block = ""
+    if pillar_config.lower() != "none":
+        pillar_block = "    pillars\n    {\n        type            zeroGradient;\n    }\n\n"
+    inlet_blocks = "".join(
+        f"    {name}\n    {{\n        type            fixedValue;\n"
+        f"        value           uniform {C:.6f};\n    }}\n\n"
+        for name, C in name_value_pairs
+    )
+    content = (
+        "FoamFile\n{\n"
+        "    version     2.0;\n"
+        "    format      ascii;\n"
+        "    class       volScalarField;\n"
+        "    object      T;\n"
+        "}\n\n"
+        "dimensions      [0 0 0 0 0 0 0];\n\n"
+        "internalField   uniform 0;\n\n"
+        "boundaryField\n{\n"
+        + inlet_blocks
+        + "    outlet\n    {\n        type            zeroGradient;\n    }\n\n"
+        + "    walls\n    {\n        type            zeroGradient;\n    }\n\n"
+        + "    floor\n    {\n        type            zeroGradient;\n    }\n\n"
+        + pillar_block
+        + f"    frontAndBack\n    {{\n        type            {fab};\n    }}\n"
+        + "}\n"
+    )
+    t_path.write_text(content)
 
 
 def _run_simplefoam(case_dir: Path, timeout: int = SOLVER_TIMEOUT_S) -> bool:

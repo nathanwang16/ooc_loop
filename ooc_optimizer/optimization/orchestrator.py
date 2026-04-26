@@ -21,7 +21,7 @@ logger = logging.getLogger(__name__)
 
 PILLAR_CONFIGS = ["none", "1x4", "2x4", "3x6"]
 CHAMBER_HEIGHTS = [200.0, 300.0]
-INLET_TOPOLOGIES = ["opposing", "same_side_Y", "asymmetric_lumen"]
+INLET_TOPOLOGIES = ["opposing", "same_side_Y", "asymmetric_lumen", "ladder"]
 
 
 def _run_single_configuration(

@@ -1,0 +1,16 @@
+FoamFile
+{
+    version     2.0;
+    format      ascii;
+    class       dictionary;
+    object      transportProperties;
+}
+
+// Culture media ≈ water
+transportModel  Newtonian;
+nu              [0 2 -1 0 0 0 0] 1e-06;  // kinematic viscosity = μ/ρ = 0.001/1000
+
+// Passive-scalar diffusivity [m^2/s]. Default is a small-molecule drug
+// surrogate (D ~ 1e-10 m^2/s). The ooc_optimizer.cfd.scalar orchestrator
+// overwrites this value per-case from the YAML config.
+DT              [0 2 -1 0 0 0 0] 1e-10;

@@ -1,16 +1,22 @@
 # Example: inverse design against a linear concentration gradient.
 #
 # Inherits from configs/default_config.yaml and overrides target profile,
-# bounds, and BO budget. Run 2 (single-topology, 120 evals) wedged W,
-# r_flow, and delta_W against their upper bounds → bounds widened here so
-# the optimum is interior, not boundary-pinned.
+# bounds, and BO budget.
 #
-# All three inlet topologies are now swept; per-topology interpretability
-# is run after BO and a comparison report is written next to results.
+# Integration sweep: 4 inlet topologies (opposing, same_side_Y,
+# asymmetric_lumen, ladder) on a y-axis linear gradient target. The previous
+# x-axis campaign hit the geometric L2 ceiling ~0.585 because mass conservation
+# forbids two-inlet co-flow chips from producing a streamwise gradient. The
+# Phase-1 ladder prototype (8 y-stacked inlet strips) achieved L2 ~0.11
+# against axis=y; this campaign integrates that topology with Re_max=100
+# (laminar gate) and aspect_ratio_max=15 (PDMS-collapse gate at H=200 caps
+# W at 3000 μm).
+#
+# Per-topology budget = 200 evals; total = 4 × 200 = 800 forward solves.
 
 target_profile:
   kind: linear_gradient
-  axis: x
+  axis: y
   c_high: 1.0
   c_low: 0.0
 
@@ -43,25 +49,27 @@ continuous_bounds:
 
 optimization:
   n_sobol_init: 24
-  n_bo_iterations: 96
-  total_per_config: 120
+  n_bo_iterations: 176
+  total_per_config: 200
   batch_size: 4               # 4 concurrent CFD per BORunner
   max_concurrent_cfd: 8       # outer workers = 8 // 4 = 2 configs in parallel
   constraints:
     tau_mean_min: 0.1
     tau_mean_max: 2.0
     f_dead_max: 0.08
+    Re_max: 100.0             # laminar gate (safety rail; rarely binds at our Q)
+    aspect_ratio_max: 15.0    # PDMS-collapse gate (10–20 literature; W cap = 3000 μm at H=200)
   penalty_L2: 99.0
   penalty_cv_tau: 999.0
 
-# Sweep all three inlet topologies; pillar="none" and H=200 stay fixed
-# so the BO budget concentrates on the topology comparison rather than
-# the discrete pillar/height grid.  Per-topology budget = 120 evals;
-# total = 3 × 120 = 360 forward solves.
+# Sweep four inlet topologies (3 existing two-inlet + ladder); pillar="none"
+# and H=200 stay fixed so the BO budget concentrates on the topology
+# comparison rather than the discrete pillar/height grid. Per-topology
+# budget = 200 evals; total = 4 × 200 = 800 forward solves.
 discrete_levels:
   pillar_config: ["none"]
   chamber_height: [200]
-  inlet_topology: ["opposing", "same_side_Y", "asymmetric_lumen"]
+  inlet_topology: ["opposing", "same_side_Y", "asymmetric_lumen", "ladder"]
 
 paths:
   template_case: "ooc_optimizer/cfd/template"

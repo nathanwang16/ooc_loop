@@ -57,6 +57,13 @@ def _active_params(pillar_config: str, topology: str) -> List[bool]:
         active[PARAMETER_ORDER.index("s_p")] = False
     if topology != "opposing":
         active[PARAMETER_ORDER.index("delta_W")] = False
+    if topology == "ladder":
+        # Ladder is a fixed N-strip y-stacked-inlet topology with equal flow
+        # split; only chamber width W and Q_total influence the field. Pin the
+        # rest to midpoint via the mask so the GP doesn't waste effort on
+        # informationless inputs.
+        for name in ("theta", "r_flow", "delta_W", "d_p", "s_p"):
+            active[PARAMETER_ORDER.index(name)] = False
     return active
 
 
@@ -78,7 +85,7 @@ class BORunner:
             raise ValueError(f"Invalid pillar_config: {pillar_config}")
         if H not in (200.0, 300.0):
             raise ValueError(f"Invalid chamber height: {H}")
-        if topology not in {"opposing", "same_side_Y", "asymmetric_lumen"}:
+        if topology not in {"opposing", "same_side_Y", "asymmetric_lumen", "ladder"}:
             raise ValueError(f"Invalid topology: {topology}")
         for key in ("continuous_bounds", "optimization", "paths"):
             if key not in config:
@@ -182,10 +189,14 @@ class BORunner:
         if "constraints" not in opt_cfg:
             raise ValueError("Missing optimization.constraints in config")
         c = opt_cfg["constraints"]
-        for key in ("tau_mean_min", "tau_mean_max", "f_dead_max"):
+        required = (
+            "tau_mean_min", "tau_mean_max", "f_dead_max",
+            "Re_max", "aspect_ratio_max",
+        )
+        for key in required:
             if key not in c:
                 raise ValueError(f"Missing constraint key '{key}'")
-        return {k: float(c[k]) for k in ("tau_mean_min", "tau_mean_max", "f_dead_max")}
+        return {k: float(c[k]) for k in required}
 
     @staticmethod
     def _build_cfd_config(config: Dict[str, Any]) -> Dict[str, Any]:
@@ -335,7 +346,7 @@ class BORunner:
         )
         wall = time.perf_counter() - start
 
-        for key in ("L2_to_target", "tau_mean", "f_dead"):
+        for key in ("L2_to_target", "tau_mean", "f_dead", "Re", "aspect_ratio"):
             if key not in metrics:
                 raise ValueError(f"evaluate_cfd returned incomplete metrics (missing {key})")
 
@@ -349,15 +360,26 @@ class BORunner:
         c1 = float(metrics["tau_mean"] - self._constraint_config["tau_mean_min"])
         c2 = float(self._constraint_config["tau_mean_max"] - metrics["tau_mean"])
         c3 = float(self._constraint_config["f_dead_max"] - metrics["f_dead"])
+        # Laminar gate: NaN Re (geometry/CFD failure) maps to a large negative
+        # slack so the candidate is treated as infeasible without crashing.
+        Re_val = float(metrics["Re"])
+        if not (Re_val == Re_val):  # NaN
+            Re_val = float("inf")
+        c4 = float(self._constraint_config["Re_max"] - Re_val)
+        ar_val = float(metrics["aspect_ratio"])
+        if not (ar_val == ar_val):
+            ar_val = float("inf")
+        c5 = float(self._constraint_config["aspect_ratio_max"] - ar_val)
 
         record = {
             "params": params,
             "metrics": metrics,
             "objective": objective,
             "raw_L2": raw_L2,
-            "constraints": [c1, c2, c3],
+            "constraints": [c1, c2, c3, c4, c5],
             "feasible": bool(
-                c1 >= 0 and c2 >= 0 and c3 >= 0 and converged and mesh_ok
+                c1 >= 0 and c2 >= 0 and c3 >= 0 and c4 >= 0 and c5 >= 0
+                and converged and mesh_ok
             ),
             "wall_time_s": wall,
         }
@@ -375,7 +397,7 @@ class BORunner:
                 wall_time_s=wall,
                 case_dir=Path(metrics["case_dir"]) if metrics.get("case_dir") else None,
             )
-        return objective, [c1, c2, c3]
+        return objective, [c1, c2, c3, c4, c5]
 
     def _evaluate_batch(self, points: List[Any]) -> List[Tuple[float, List[float]]]:
         """Evaluate a list of candidate points concurrently.
@@ -434,7 +456,7 @@ class BORunner:
         self._objective_model = _build_gp(self.train_X, self.train_Y)
         self._constraint_models = [
             _build_gp(self.train_X, self.train_constraints[:, idx].unsqueeze(-1))
-            for idx in range(3)
+            for idx in range(5)
         ]
         self._model_list = ModelListGP(self._objective_model, *self._constraint_models)
 
@@ -473,12 +495,16 @@ class BORunner:
 
         best_f = self._best_observed_feasible_objective()
         # Constraint slacks are encoded as c >= 0; in the joint model
-        # output indices 1..3 are the three constraint GPs.
+        # output indices 1..5 are the five constraint GPs (tau_mean lower/upper,
+        # f_dead, Re_max, aspect_ratio_max).
         acq = ConstrainedExpectedImprovement(
             model=self._model_list,
             best_f=best_f,
             objective_index=0,
-            constraints={1: (0.0, None), 2: (0.0, None), 3: (0.0, None)},
+            constraints={
+                1: (0.0, None), 2: (0.0, None), 3: (0.0, None),
+                4: (0.0, None), 5: (0.0, None),
+            },
             maximize=False,  # objective is L2 (minimised)
         )
 

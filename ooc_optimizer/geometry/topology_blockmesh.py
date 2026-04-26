@@ -31,16 +31,24 @@ from typing import Dict, List, Sequence, Tuple
 
 logger = logging.getLogger(__name__)
 
-VALID_TOPOLOGIES = {"opposing", "same_side_Y", "asymmetric_lumen"}
+VALID_TOPOLOGIES = {"opposing", "same_side_Y", "asymmetric_lumen", "ladder"}
 
 L_CHAMBER_MM = 10.0
 W_INLET_MM = 0.5  # 500 μm standard inlet width
 DZ_MM_DEFAULT = 0.01
+LADDER_DEFAULT_N = 8
 
 
 @dataclass
 class BlockMeshResult:
-    """Everything the downstream solver needs to stage a case."""
+    """Everything the downstream solver needs to stage a case.
+
+    For two-inlet topologies the legacy ``inlet_drug_area_m2`` and
+    ``inlet_medium_area_m2`` are populated and ``inlet_names`` is empty.
+    For multi-inlet (ladder) topologies the legacy fields are 0.0 and
+    ``inlet_names`` / ``inlet_areas_m2`` carry the per-strip patch contract.
+    The CFD solver dispatches on ``bool(inlet_names)``.
+    """
 
     content: str
     inlet_drug_area_m2: float
@@ -50,6 +58,17 @@ class BlockMeshResult:
     chamber_height_m: float
     base_nx: int
     base_ny: int
+    inlet_names: List[str] = None  # type: ignore[assignment]
+    inlet_areas_m2: List[float] = None  # type: ignore[assignment]
+
+    def __post_init__(self):
+        # Default-factory equivalent that avoids the dataclass mutable-default
+        # error and keeps existing call sites (which pass these fields
+        # positionally for two-inlet topologies) untouched.
+        if self.inlet_names is None:
+            self.inlet_names = []
+        if self.inlet_areas_m2 is None:
+            self.inlet_areas_m2 = []
 
 
 def generate_blockmesh_dict_v2(
@@ -81,6 +100,15 @@ def generate_blockmesh_dict_v2(
         )
     if topology == "same_side_Y":
         return _bm_same_side_y(W_mm=W_mm, dz_mm=dz_mm, base_nx=base_nx, ny_per_mm=ny_per_mm)
+    if topology == "ladder":
+        N = int(params.get("N", LADDER_DEFAULT_N))
+        return _bm_ladder(
+            W_mm=W_mm,
+            dz_mm=dz_mm,
+            base_nx=base_nx,
+            ny_per_mm=ny_per_mm,
+            N=N,
+        )
     return _bm_asymmetric_lumen(
         W_mm=W_mm,
         dz_mm=dz_mm,
@@ -483,6 +511,92 @@ def _bm_asymmetric_lumen(
         chamber_height_m=dz * 1e-3,
         base_nx=total_nx,
         base_ny=ny,
+    )
+
+
+def _bm_ladder(
+    *,
+    W_mm: float,
+    dz_mm: float,
+    base_nx: int,
+    ny_per_mm: int,
+    N: int,
+) -> BlockMeshResult:
+    """N y-stacked inlet strips at x=0, equal-area, named inlet_0..inlet_{N-1}.
+
+    Each inlet face is a strip of height W_mm/N at x=0; downstream the chamber
+    is a single rectangle. The resulting blockMeshDict has N x-aligned blocks
+    sharing y-edges. The y=0 and y=W_mm walls are tagged 'floor'; there are no
+    'walls' faces (back-compat empty list keeps the writer simple). 'outlet'
+    is the union of the x=L faces of every strip.
+
+    Lifted from scripts/diagnostic_ladder_baseline.py:build_ladder_blockmesh
+    (Phase-1 baseline that achieved L2 ≈ 0.11 against axis=y target with N=8
+    and the midpoint C-convention applied at the BC writer).
+    """
+    if N < 2:
+        raise ValueError(f"Ladder requires N >= 2 (got {N})")
+    if W_mm <= 0 or dz_mm <= 0:
+        raise ValueError("W_mm, dz_mm must all be positive")
+
+    L = L_CHAMBER_MM
+    ys = [k * W_mm / N for k in range(N + 1)]
+    xs = [0.0, L]
+
+    vertices: List[Tuple[float, float, float]] = []
+    for iz in (0, 1):
+        z = iz * dz_mm
+        for iy in range(N + 1):
+            for ix in (0, 1):
+                vertices.append((xs[ix], ys[iy], z))
+
+    def v(ix: int, iy: int, iz: int) -> int:
+        return iz * (N + 1) * 2 + iy * 2 + ix
+
+    blocks = []
+    ny_counts: List[int] = []
+    for iy in range(N):
+        strip_w = ys[iy + 1] - ys[iy]
+        ny = max(2, int(round(strip_w * ny_per_mm)))
+        ny_counts.append(ny)
+        verts = (
+            v(0, iy, 0), v(1, iy, 0), v(1, iy + 1, 0), v(0, iy + 1, 0),
+            v(0, iy, 1), v(1, iy, 1), v(1, iy + 1, 1), v(0, iy + 1, 1),
+        )
+        blocks.append((verts, (base_nx, ny, 1)))
+
+    x0_face = lambda iy: (v(0, iy, 0), v(0, iy, 1), v(0, iy + 1, 1), v(0, iy + 1, 0))
+    x1_face = lambda iy: (v(1, iy, 0), v(1, iy + 1, 0), v(1, iy + 1, 1), v(1, iy, 1))
+    ymin_face = (v(0, 0, 0), v(1, 0, 0), v(1, 0, 1), v(0, 0, 1))
+    ymax_face = (v(0, N, 0), v(0, N, 1), v(1, N, 1), v(1, N, 0))
+    front_face = lambda iy: (v(0, iy, 0), v(0, iy + 1, 0), v(1, iy + 1, 0), v(1, iy, 0))
+    back_face = lambda iy: (v(0, iy, 1), v(1, iy, 1), v(1, iy + 1, 1), v(0, iy + 1, 1))
+
+    inlet_names = [f"inlet_{k}" for k in range(N)]
+    patches: Dict[str, Tuple[str, List[Tuple[int, int, int, int]]]] = {
+        name: ("patch", [x0_face(k)]) for k, name in enumerate(inlet_names)
+    }
+    patches["outlet"] = ("patch", [x1_face(iy) for iy in range(N)])
+    patches["walls"] = ("wall", [])
+    patches["floor"] = ("wall", [ymin_face, ymax_face])
+    patches["frontAndBack"] = (
+        "empty",
+        [front_face(iy) for iy in range(N)] + [back_face(iy) for iy in range(N)],
+    )
+
+    content = _render(vertices, blocks, patches)
+    inlet_area = (W_mm / N * 1e-3) * (dz_mm * 1e-3)
+    return BlockMeshResult(
+        content=content,
+        inlet_drug_area_m2=0.0,
+        inlet_medium_area_m2=0.0,
+        chamber_length_m=L * 1e-3,
+        chamber_width_m=W_mm * 1e-3,
+        chamber_height_m=dz_mm * 1e-3,
+        base_nx=base_nx,
+        base_ny=sum(ny_counts),
+        inlet_names=inlet_names,
+        inlet_areas_m2=[inlet_area] * N,
     )
 
 

@@ -1,0 +1,33 @@
+{
+  "n_evals": 32,
+  "n_feasible": 32,
+  "best": {
+    "idx": 3,
+    "W_um": 1605.1419647410512,
+    "Q_total_uL_min": 10.169307845644653,
+    "L2_to_target_axis_y": 0.17198664806580152,
+    "C_mean": 0.4999974034202557,
+    "C_std": 0.37338481773574383,
+    "C_min": 2.7470473e-13,
+    "C_max": 1.0,
+    "scalar_converged": true,
+    "U_in_m_s": 0.0005279547473591229,
+    "wall_time_s": 3.943312883377075,
+    "case_dir": "/Users/lemon/Desktop/ooc_loop/examples/tumor_chip_linear_gradient/data/diagnostic/ladder_scan/case_003",
+    "ok": true
+  },
+  "L2_baseline_uniform_W3000": 0.1756,
+  "L2_old_BO_winner_opposing": 0.6343,
+  "W_bounds_um": [
+    1500.0,
+    4500.0
+  ],
+  "Q_bounds_uL_min": [
+    5.0,
+    200.0
+  ],
+  "N_inlets": 8,
+  "L_mm": 10.0,
+  "H_um": 200.0,
+  "diffusivity_m2_s": 1e-10
+}

@@ -96,6 +96,8 @@ optimization:
     tau_mean_min: 0.1           # relaxed vs v1 (drug transport is less WSS-sensitive)
     tau_mean_max: 2.0
     f_dead_max: 0.05
+    Re_max: 100.0               # laminar gate (rho*U*D_h/mu) — flags non-Stokesian regimes
+    aspect_ratio_max: 15.0      # PDMS-collapse gate W/H — literature 10–20 range
   penalty_L2: 99.0
   penalty_cv_tau: 999.0
 

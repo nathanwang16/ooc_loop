@@ -1,0 +1,29 @@
+{
+  "L2_to_target": 0.9997290520275348,
+  "grad_sharpness": 50.608306100866756,
+  "monotonicity": 0.5884559283183997,
+  "cv_tau": 0.4250421121422041,
+  "tau_mean": 1.6666876069127454,
+  "tau_min": 0.16678077001231034,
+  "tau_max": 2.490439260629165,
+  "f_dead": 0.0,
+  "delta_p": 0.0,
+  "converged": true,
+  "C_mean": 0.5000005392036271,
+  "C_std": 0.4998356439769358,
+  "converged_U": true,
+  "converged_C": true,
+  "mesh_ok": true,
+  "mesh_strategy_requested": "blockMesh",
+  "mesh_strategy_used": "blockMesh",
+  "mesh_checkmesh_ok": true,
+  "mesh_used_fallback": false,
+  "mesh_checkmesh_summary": {
+    "failed_checks": null,
+    "max_non_ortho": 0.0,
+    "concave_cells": null
+  },
+  "warnings": [],
+  "case_dir": "/Users/lemon/Desktop/ooc_loop/examples/tumor_chip_linear_gradient/data/diagnostic/cases/run_opposing_none_H200_1777224803064_57358_5eea76",
+  "topology": "opposing"
+}

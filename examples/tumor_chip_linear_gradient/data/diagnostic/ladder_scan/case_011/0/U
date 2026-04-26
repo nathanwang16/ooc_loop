@@ -1,0 +1,74 @@
+FoamFile
+{
+    version     2.0;
+    format      ascii;
+    class       volVectorField;
+    object      U;
+}
+
+dimensions      [0 1 -1 0 0 0 0];
+
+internalField   uniform (0 0 0);
+
+boundaryField
+{
+    inlet_0
+    {
+        type            fixedValue;
+        value           uniform (0.002980 0 0);
+    }
+    
+    inlet_1
+    {
+        type            fixedValue;
+        value           uniform (0.002980 0 0);
+    }
+    
+    inlet_2
+    {
+        type            fixedValue;
+        value           uniform (0.002980 0 0);
+    }
+    
+    inlet_3
+    {
+        type            fixedValue;
+        value           uniform (0.002980 0 0);
+    }
+    
+    inlet_4
+    {
+        type            fixedValue;
+        value           uniform (0.002980 0 0);
+    }
+    
+    inlet_5
+    {
+        type            fixedValue;
+        value           uniform (0.002980 0 0);
+    }
+    
+    inlet_6
+    {
+        type            fixedValue;
+        value           uniform (0.002980 0 0);
+    }
+    
+    inlet_7
+    {
+        type            fixedValue;
+        value           uniform (0.002980 0 0);
+    }
+    
+    outlet
+    { type zeroGradient; }
+    
+    walls
+    { type noSlip; }
+    
+    floor
+    { type noSlip; }
+    
+    frontAndBack
+    { type empty; }
+}

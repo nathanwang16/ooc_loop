@@ -1,0 +1,81 @@
+FoamFile
+{
+    version     2.0;
+    format      ascii;
+    class       volScalarField;
+    object      T;
+}
+
+dimensions      [0 0 0 0 0 0 0];
+
+internalField   uniform 0;
+
+boundaryField
+{
+    inlet_drug
+    {
+        type            fixedValue;
+        value           uniform 1.0;
+    }
+    inlet_medium
+    {
+        type            fixedValue;
+        value           uniform 0.0;
+    }
+    outlet
+    {
+        type            zeroGradient;
+    }
+    walls
+    {
+        type            zeroGradient;
+    }
+    floor
+    {
+        type            zeroGradient;
+    }
+    frontAndBack
+    {
+        type            empty;
+    }
+    inlet_0
+    {
+        type            fixedValue;
+        value           uniform 0.0625;
+    }
+    inlet_1
+    {
+        type            fixedValue;
+        value           uniform 0.1875;
+    }
+    inlet_2
+    {
+        type            fixedValue;
+        value           uniform 0.3125;
+    }
+    inlet_3
+    {
+        type            fixedValue;
+        value           uniform 0.4375;
+    }
+    inlet_4
+    {
+        type            fixedValue;
+        value           uniform 0.5625;
+    }
+    inlet_5
+    {
+        type            fixedValue;
+        value           uniform 0.6875;
+    }
+    inlet_6
+    {
+        type            fixedValue;
+        value           uniform 0.8125;
+    }
+    inlet_7
+    {
+        type            fixedValue;
+        value           uniform 0.9375;
+    }
+}

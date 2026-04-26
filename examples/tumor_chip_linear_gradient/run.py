@@ -85,6 +85,42 @@ def _format_pct(num: int, den: int) -> str:
     return "n/a" if den == 0 else f"{num}/{den} ({100.0 * num / den:.1f}%)"
 
 
+def _median(xs: List[float]) -> float:
+    if not xs:
+        return float("nan")
+    s = sorted(xs)
+    n = len(s)
+    if n % 2 == 1:
+        return float(s[n // 2])
+    return float(0.5 * (s[n // 2 - 1] + s[n // 2]))
+
+
+def _load_run_evaluations(summary: Dict[str, Any]) -> List[Dict[str, Any]]:
+    """Load per-eval records from the BO state directory. Returns [] on miss."""
+    state_dir = summary.get("state_dir")
+    if not state_dir:
+        return []
+    p = Path(state_dir) / "evaluations.json"
+    if not p.exists():
+        return []
+    try:
+        with open(p) as f:
+            payload = json.load(f)
+        return list(payload.get("evaluations", []))
+    except Exception:
+        return []
+
+
+def _best_feasible_metrics(summary: Dict[str, Any]) -> Dict[str, Any]:
+    """Pull metrics dict from the best-feasible eval record (if any)."""
+    evals = _load_run_evaluations(summary)
+    feasible = [e for e in evals if e.get("feasible")]
+    if not feasible:
+        return None  # type: ignore[return-value]
+    best = min(feasible, key=lambda e: float(e.get("objective", 99.0)))
+    return dict(best.get("metrics") or {})
+
+
 def _write_comparison_report(
     summaries: List[Dict[str, Any]], output_path: Path, winner_config_name: str
 ) -> Path:
@@ -92,9 +128,11 @@ def _write_comparison_report(
     lines: List[str] = [
         "# Cross-topology comparison",
         "",
-        "Bayesian-optimization sweep of three inlet topologies for a linear",
-        "x-gradient target.  120 evaluations per topology (24 Sobol + 96 BO);",
-        "pillar_config=`none`, H=200 μm fixed.",
+        "Bayesian-optimization sweep of 4 inlet topologies (opposing,",
+        "same_side_Y, asymmetric_lumen, ladder) for a linear y-gradient",
+        "target. 200 evaluations per topology (24 Sobol + 176 BO);",
+        "pillar_config=`none`, H=200 μm fixed. 5 constraints active",
+        "(tau_mean lower/upper, f_dead, Re_max, aspect_ratio_max).",
         "",
         f"**Global winner**: `{winner_config_name}`",
         "",
@@ -136,6 +174,99 @@ def _write_comparison_report(
         dom_str = ", ".join(f"`{n}`" for n in dominant) or "—"
         inert_str = ", ".join(f"`{n}`" for n in inert) or "—"
         lines.append(f"| `{s['topology']}` | {dom_str} | {inert_str} |")
+
+    # ---- Per-topology S1 / ST detail cross-tab ---------------------------
+    from ooc_optimizer.optimization.bo_loop import PARAMETER_ORDER
+    lines.extend([
+        "",
+        "## Per-topology Sobol S1 / ST detail",
+        "",
+        "Active parameters per topology only; masked-out dims show `—`.",
+        "",
+    ])
+    header_cells = ["Param"]
+    for s in summaries:
+        if s.get("skipped_reason"):
+            continue
+        header_cells.append(f"{s['topology']} S1")
+        header_cells.append(f"{s['topology']} ST")
+    if len(header_cells) > 1:
+        lines.append("| " + " | ".join(header_cells) + " |")
+        lines.append("|" + "|".join(["---"] * len(header_cells)) + "|")
+        for pname in PARAMETER_ORDER:
+            row = [f"`{pname}`"]
+            for s in summaries:
+                if s.get("skipped_reason"):
+                    continue
+                names = s["sobol"]["names"]
+                if pname in names:
+                    j = names.index(pname)
+                    row.append(f"{s['sobol']['S1'][j]:.3f}")
+                    row.append(f"{s['sobol']['ST'][j]:.3f}")
+                else:
+                    row.append("—")
+                    row.append("—")
+            lines.append("| " + " | ".join(row) + " |")
+
+    # ---- Constraint-feasibility cross-tab --------------------------------
+    lines.extend([
+        "",
+        "## Constraint-feasibility table",
+        "",
+        "Median slack per constraint (positive = satisfied) over all evals,",
+        "and overall feasibility rate.",
+        "",
+        "| Topology | c1 (τ≥τ_min) | c2 (τ≤τ_max) | c3 (f_dead) | c4 (Re) | c5 (aspect) | Feasibility |",
+        "|---|---|---|---|---|---|---|",
+    ])
+    for s in summaries:
+        if s.get("skipped_reason"):
+            continue
+        evals = _load_run_evaluations(s)
+        if not evals:
+            lines.append(f"| `{s['topology']}` | — | — | — | — | — | — |")
+            continue
+        slack_cols = [[], [], [], [], []]
+        feas = 0
+        for e in evals:
+            cs = e.get("constraints") or []
+            if len(cs) >= 5:
+                for i in range(5):
+                    slack_cols[i].append(float(cs[i]))
+            if e.get("feasible"):
+                feas += 1
+        med = [f"{_median(c):.3f}" if c else "—" for c in slack_cols]
+        feas_pct = f"{100.0 * feas / max(1, len(evals)):.1f}%"
+        lines.append(
+            f"| `{s['topology']}` | {med[0]} | {med[1]} | {med[2]} | {med[3]} | {med[4]} | "
+            f"{feas}/{len(evals)} ({feas_pct}) |"
+        )
+
+    # ---- Diagnostic-physics summary --------------------------------------
+    lines.extend([
+        "",
+        "## Diagnostic dimensionless physics (best-feasible record)",
+        "",
+        "Surfacing the dimensionless numbers for the best-feasible eval per topology.",
+        "",
+        "| Topology | Re | aspect_ratio | Pe_streamwise | Pe_crossstream | R²_to_linear |",
+        "|---|---|---|---|---|---|",
+    ])
+    for s in summaries:
+        if s.get("skipped_reason"):
+            continue
+        bf_metrics = _best_feasible_metrics(s)
+        if bf_metrics is None:
+            lines.append(f"| `{s['topology']}` | — | — | — | — | — |")
+            continue
+        cells = []
+        for key in ("Re", "aspect_ratio", "Pe_streamwise", "Pe_crossstream", "R2_to_linear"):
+            v = bf_metrics.get(key)
+            if v is None or (isinstance(v, float) and v != v):
+                cells.append("nan")
+            else:
+                cells.append(f"{float(v):.3g}")
+        lines.append(f"| `{s['topology']}` | " + " | ".join(cells) + " |")
 
     lines.extend([
         "",
