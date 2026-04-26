@@ -146,13 +146,17 @@ def analyse_winner(
 
     figs: Dict[str, Optional[str]] = {}
     if write_figures:
-        figs["sobol"] = str(plot_sobol_bar(sobol, out_dir / "sobol.png", title=run.get("topology")))
-        figs["local_sensitivity"] = str(
-            plot_local_sensitivity(grads, out_dir / "local_sensitivity.png", title=run.get("topology"))
-        )
-        figs["tolerance"] = str(
-            plot_tolerance_intervals(tolerances, out_dir / "tolerance.png", title=run.get("topology"))
-        )
+        topology_raw = run.get("topology") or ""
+        pretty_topology = topology_raw.replace("_", " ")
+        figs["sobol"] = str(plot_sobol_bar(
+            sobol, out_dir / "sobol.png",
+            title=f"Sobol sensitivity — {pretty_topology}"))
+        figs["local_sensitivity"] = str(plot_local_sensitivity(
+            grads, out_dir / "local_sensitivity.png",
+            title=f"Local sensitivity at optimum — {pretty_topology}"))
+        figs["tolerance"] = str(plot_tolerance_intervals(
+            tolerances, out_dir / "tolerance.png",
+            title=f"Fabrication tolerance — {pretty_topology}"))
 
     summary: Dict[str, Any] = {
         "state_dir": str(state_dir),

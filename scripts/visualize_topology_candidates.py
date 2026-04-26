@@ -36,11 +36,11 @@ CMAP = LinearSegmentedColormap.from_list("conc", ["#2b6cb0", "#f7fafc", "#c53030
 
 
 def _new_axes(title: str, xlim, ylim, *, height=4.6):
-    fig, ax = plt.subplots(figsize=(11.0, height))
+    fig, ax = plt.subplots(figsize=(11.5, height))
     ax.set_title(title, fontsize=13, pad=10)
     ax.set_xlabel("x  (flow direction, μm)", fontsize=10, labelpad=6)
-    ax.set_ylabel("y  (μm)", fontsize=10, labelpad=6)
-    ax.tick_params(labelsize=8)
+    ax.set_ylabel("y  (μm)", fontsize=10, labelpad=10)
+    ax.tick_params(labelsize=8, pad=3)
     ax.set_aspect("equal")
     ax.set_xlim(*xlim)
     ax.set_ylim(*ylim)
@@ -75,7 +75,7 @@ def _save(fig, name: str):
 
 def render_ladder(N: int = 8):
     fig, ax = _new_axes(f"A. Y-stacked ladder  (N={N} inlets)  →  axis=y linear gradient   [WINNER]",
-                        xlim=(-1100, L + 1100), ylim=(-450, W + 450))
+                        xlim=(-2400, L + 1400), ylim=(-450, W + 450))
     _draw_chamber(ax)
 
     inlet_w = 250.0  # px in x for inlet patch
@@ -85,13 +85,13 @@ def render_ladder(N: int = 8):
         ax.add_patch(mpatches.Rectangle((-inlet_w, k * dy), inlet_w, dy,
                                         facecolor=CMAP(c), edgecolor="#1f2937",
                                         linewidth=0.6, zorder=2))
-    ax.text(-inlet_w * 1.15, W / 2, "N inlet strips\n(stacked in y)",
+    ax.text(-inlet_w - 250, W / 2, "N inlet strips\n(stacked in y)",
             ha="right", va="center", fontsize=9, color="#374151")
 
     # Outlet
     ax.add_patch(mpatches.Rectangle((L, 0), 250, W, facecolor="#22c55e",
                                     edgecolor="#15803d", alpha=0.75, zorder=2))
-    ax.text(L + 350, W / 2, "outlet", fontsize=10, color="#15803d", va="center")
+    ax.text(L + 400, W / 2, "outlet", fontsize=10, color="#15803d", va="center")
 
     # Flow arrow
     ax.annotate("", xy=(L * 0.55, W * 0.5), xytext=(L * 0.10, W * 0.5),
@@ -111,7 +111,7 @@ def render_christmas_tree():
     tree_x_end = -200.0
 
     fig, ax = _new_axes("B. Christmas-tree pre-mixer + chamber  →  axis=y linear gradient",
-                        xlim=(tree_x_start - 1500, L + 1100), ylim=(-W * 0.25, W * 1.15),
+                        xlim=(tree_x_start - 1700, L + 1700), ylim=(-W * 0.25, W * 1.15),
                         height=5.2)
     _draw_chamber(ax)
 
@@ -153,7 +153,7 @@ def render_christmas_tree():
 
     ax.add_patch(mpatches.Rectangle((L, 0), 250, W, facecolor="#22c55e",
                                     edgecolor="#15803d", alpha=0.75))
-    ax.text(L + 350, W / 2, "outlet", fontsize=10, color="#15803d", va="center")
+    ax.text(L + 400, W / 2, "outlet", fontsize=10, color="#15803d", va="center")
 
     ax.text(tree_x_start - 400, -W * 0.18, "2 reagent inputs", fontsize=9, color="#374151")
     ax.text((tree_x_start + tree_x_end) / 2, W * 1.05,
@@ -170,13 +170,13 @@ def render_christmas_tree():
 
 def render_side_injection(K: int = 8):
     fig, ax = _new_axes(f"C. Distributed side-injection  (K={K} drug ports along y=0)  →  axis=x linear gradient",
-                        xlim=(-1100, L + 1100), ylim=(-W * 0.55, W + 450))
+                        xlim=(-2400, L + 1400), ylim=(-W * 0.55, W + 450))
     _draw_chamber(ax)
 
     # Main medium inlet at x=0, full width (C=0)
     ax.add_patch(mpatches.Rectangle((-250, 0), 250, W, facecolor=CMAP(0.0),
                                     edgecolor="#1f2937", lw=0.6))
-    ax.text(-350, W / 2, "medium\nC=0", ha="right", va="center", fontsize=9,
+    ax.text(-500, W / 2, "medium\nC=0", ha="right", va="center", fontsize=9,
             color="#1e3a8a", fontweight="bold")
 
     # K side ports along y=0 with x-varying flow rate Q_k
@@ -200,7 +200,7 @@ def render_side_injection(K: int = 8):
 
     ax.add_patch(mpatches.Rectangle((L, 0), 250, W, facecolor="#22c55e",
                                     edgecolor="#15803d", alpha=0.75))
-    ax.text(L + 350, W / 2, "outlet", fontsize=10, color="#15803d", va="center")
+    ax.text(L + 400, W / 2, "outlet", fontsize=10, color="#15803d", va="center")
 
     # Flow arrow
     ax.annotate("", xy=(L * 0.55, W * 0.85), xytext=(L * 0.10, W * 0.85),
@@ -217,13 +217,13 @@ def render_side_injection(K: int = 8):
 
 def render_permeable_wall():
     fig, ax = _new_axes("D. Permeable floor membrane + reservoir  →  axis=x linear gradient",
-                        xlim=(-1100, L + 1100), ylim=(-450, W + 700))
+                        xlim=(-2400, L + 1400), ylim=(-450, W + 700))
     _draw_chamber(ax)
 
     # Main medium inlet (C=0)
     ax.add_patch(mpatches.Rectangle((-250, 0), 250, W, facecolor=CMAP(0.0),
                                     edgecolor="#1f2937", lw=0.6))
-    ax.text(-350, W / 2, "medium\nC=0", ha="right", va="center", fontsize=9,
+    ax.text(-500, W / 2, "medium\nC=0", ha="right", va="center", fontsize=9,
             color="#1e3a8a", fontweight="bold")
 
     # Permeable floor strips (top-down: permeability gradient shown as colour)
@@ -243,7 +243,7 @@ def render_permeable_wall():
 
     ax.add_patch(mpatches.Rectangle((L, 0), 250, W, facecolor="#22c55e",
                                     edgecolor="#15803d", alpha=0.75))
-    ax.text(L + 350, W / 2, "outlet", fontsize=10, color="#15803d", va="center")
+    ax.text(L + 400, W / 2, "outlet", fontsize=10, color="#15803d", va="center")
 
     ax.annotate("", xy=(L * 0.55, W * 0.5), xytext=(L * 0.10, W * 0.5),
                 arrowprops=dict(arrowstyle="->", color="#374151", lw=1.5))
@@ -259,7 +259,7 @@ def render_permeable_wall():
 
 def render_counter_flow():
     fig, ax = _new_axes("E. Counter-flow inlets  →  axis=x  (REJECTED — unsteady-flow risk)",
-                        xlim=(-1100, L + 1100), ylim=(-W * 0.3, W * 1.55))
+                        xlim=(-2400, L + 2400), ylim=(-W * 0.3, W * 1.55))
     _draw_chamber(ax)
 
     # Drug inlet at x=0 (small, low Q, C=1)
@@ -267,13 +267,13 @@ def render_counter_flow():
     drug_y1 = W * 0.6
     ax.add_patch(mpatches.Rectangle((-250, drug_y0), 250, drug_y1 - drug_y0,
                                     facecolor=CMAP(1.0), edgecolor="#7f1d1d", lw=0.7))
-    ax.text(-350, W * 0.5, "drug\nC=1\n(low Q)", ha="right", va="center",
+    ax.text(-500, W * 0.5, "drug\nC=1\n(low Q)", ha="right", va="center",
             fontsize=8.5, color="#7f1d1d", fontweight="bold")
 
     # Medium inlet at x=L (full face, high Q, C=0)
     ax.add_patch(mpatches.Rectangle((L, 0), 250, W, facecolor=CMAP(0.0),
                                     edgecolor="#1e3a8a", lw=0.7))
-    ax.text(L + 350, W / 2, "medium\nC=0\n(high Q)", ha="left", va="center",
+    ax.text(L + 500, W / 2, "medium\nC=0\n(high Q)", ha="left", va="center",
             fontsize=8.5, color="#1e3a8a", fontweight="bold")
 
     # Side outlets at y=0 and y=W, mid-chamber
