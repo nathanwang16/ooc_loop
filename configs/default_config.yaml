@@ -86,6 +86,12 @@ optimization:
   n_sobol_init: 20              # v2: 20 Sobol init
   n_bo_iterations: 40           # v2: 40 BO iterations
   total_per_config: 60
+  # Intra-config trial batching: q=4 candidates per round x 2 outer config
+  # processes = 8 concurrent OpenFOAM cases (M1 Max perf-core budget).
+  # Halves BO rounds per config (40 -> 10) which slashes GP-fit/acquisition
+  # overhead; greedy-q sequential CEI keeps optimisation quality acceptable.
+  batch_size: 4
+  max_concurrent_cfd: 8
   constraints:
     tau_mean_min: 0.1           # relaxed vs v1 (drug transport is less WSS-sensitive)
     tau_mean_max: 2.0

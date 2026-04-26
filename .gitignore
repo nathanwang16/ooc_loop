@@ -24,22 +24,26 @@ env/
 .coverage.*
 htmlcov/
 
-# Data outputs (regenerable)
-data/stl/
-data/cases/
-data/results/
-data/experiments/
-data/manual_verification/
-data/manual_verification_complex/
-data/premise_test/
+# Data outputs (regenerable) — match at any depth so examples/*/data/* is also ignored
+**/data/stl/
+**/data/cases/
+**/data/results/
+**/data/experiments/
+**/data/manual_verification/
+**/data/manual_verification_complex/
+**/data/premise_test/
+
+# Saved simulation run snapshots (e.g. data_run1, data_run_old)
+**/data_run*/
 
 # OpenFOAM runtime artifacts
-*/processor*/
-*/postProcessing/
-*/logs/
+**/processor*/
+**/postProcessing/
+**/logs/
 
 # Logs
 *.log
+nohup.out
 
 # OS
 .DS_Store

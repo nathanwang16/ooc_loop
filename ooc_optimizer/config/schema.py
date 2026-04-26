@@ -142,9 +142,30 @@ class OptimizationBlock(BaseModel):
     n_sobol_init: int = 20
     n_bo_iterations: int = 40
     total_per_config: int = 60
+    # Intra-config trial batching: number of CFD evaluations executed concurrently
+    # per BO/Sobol round inside a single BORunner. 1 preserves serial behavior.
+    batch_size: int = 1
+    # Hard ceiling on simultaneous CFD subprocesses across the whole orchestrator
+    # (outer ProcessPoolExecutor workers x inner batch_size). Tuned for the 10-core
+    # M1 Max budget by default.
+    max_concurrent_cfd: int = 8
     constraints: ConstraintBounds = Field(default_factory=ConstraintBounds)
     penalty_L2: float = 99.0
     penalty_cv_tau: float = 999.0  # retained for v1 compatibility
+
+    @field_validator("batch_size")
+    @classmethod
+    def _check_batch_size(cls, v: int) -> int:
+        if v < 1:
+            raise ValueError("batch_size must be >= 1")
+        return v
+
+    @field_validator("max_concurrent_cfd")
+    @classmethod
+    def _check_max_concurrent(cls, v: int) -> int:
+        if v < 1:
+            raise ValueError("max_concurrent_cfd must be >= 1")
+        return v
 
 
 class InterpretabilityConfig(BaseModel):

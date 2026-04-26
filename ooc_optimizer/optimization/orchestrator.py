@@ -67,8 +67,18 @@ def run_all_configurations(
     all_runs: List[Dict[str, Any]] = []
 
     if parallel:
-        max_workers = min(len(jobs), 8)
-        logger.info("Running %d BO jobs in parallel (workers=%d)", len(jobs), max_workers)
+        # Cap concurrent CFD subprocess count = outer process workers x inner
+        # ThreadPoolExecutor (batch_size). Default budget is 8 (M1 Max has 8
+        # performance cores); both knobs live in the optimization config block.
+        opt_block = config.get("optimization", {}) if isinstance(config, dict) else {}
+        batch_size = max(1, int(opt_block.get("batch_size", 1)))
+        max_concurrent_cfd = max(1, int(opt_block.get("max_concurrent_cfd", 8)))
+        worker_budget = max(1, max_concurrent_cfd // batch_size)
+        max_workers = min(len(jobs), worker_budget)
+        logger.info(
+            "Running %d BO jobs in parallel (workers=%d, batch_size=%d, total_concurrent_cfd<=%d)",
+            len(jobs), max_workers, batch_size, max_workers * batch_size,
+        )
         with ProcessPoolExecutor(max_workers=max_workers) as ex:
             futs = {
                 ex.submit(_run_single_configuration, config, p, h, t, target_profile): (t, p, h)

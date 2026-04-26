@@ -1,8 +1,12 @@
 # Example: inverse design against a linear concentration gradient.
 #
-# Inherits all defaults from configs/default_config.yaml and only overrides
-# the target profile + a shrunken BO budget so the example runs in ~15 min
-# instead of ~12 h.  Swap back to the default budget for a full campaign.
+# Inherits from configs/default_config.yaml and overrides target profile,
+# bounds, and BO budget. Run 2 (single-topology, 120 evals) wedged W,
+# r_flow, and delta_W against their upper bounds → bounds widened here so
+# the optimum is interior, not boundary-pinned.
+#
+# All three inlet topologies are now swept; per-topology interpretability
+# is run after BO and a comparison report is written next to results.
 
 target_profile:
   kind: linear_gradient
@@ -10,15 +14,14 @@ target_profile:
   c_high: 1.0
   c_low: 0.0
 
-# Narrow the search region so Sobol doesn't waste evaluations on chambers
-# that are geometrically too small to host two 500 μm inlets (opposing
-# topology requires W >= 2*W_INLET_MM ≈ 1 mm).  Keeps all 8+12 evals
-# productive in the 15-minute budget.  Shallow merge in run.py replaces
-# the whole continuous_bounds block, so all seven params are listed.
+# Search box widened above run-2's boundary-pinned optimum.  W: was 1200..3000
+# (x*=2987 hit upper). r_flow: was 0.1..0.9 (x*=0.877 near upper). delta_W:
+# was 0.12..0.40 (x*=0.35 near upper).  All three now have headroom on the
+# upward side.  Lower bounds preserved so feasibility ratio doesn't collapse.
 continuous_bounds:
   W:
-    min: 1200
-    max: 3000
+    min: 1500
+    max: 4500
   d_p:
     min: 100
     max: 400
@@ -32,27 +35,33 @@ continuous_bounds:
     min: 5
     max: 200
   r_flow:
-    min: 0.1
-    max: 0.9
+    min: 0.10
+    max: 0.97
   delta_W:
     min: 0.12
-    max: 0.40
+    max: 0.48
 
 optimization:
-  n_sobol_init: 8
-  n_bo_iterations: 12
-  total_per_config: 20
+  n_sobol_init: 24
+  n_bo_iterations: 96
+  total_per_config: 120
+  batch_size: 4               # 4 concurrent CFD per BORunner
+  max_concurrent_cfd: 8       # outer workers = 8 // 4 = 2 configs in parallel
   constraints:
     tau_mean_min: 0.1
     tau_mean_max: 2.0
-    f_dead_max: 0.05
+    f_dead_max: 0.08
   penalty_L2: 99.0
   penalty_cv_tau: 999.0
 
+# Sweep all three inlet topologies; pillar="none" and H=200 stay fixed
+# so the BO budget concentrates on the topology comparison rather than
+# the discrete pillar/height grid.  Per-topology budget = 120 evals;
+# total = 3 × 120 = 360 forward solves.
 discrete_levels:
   pillar_config: ["none"]
   chamber_height: [200]
-  inlet_topology: ["opposing"]
+  inlet_topology: ["opposing", "same_side_Y", "asymmetric_lumen"]
 
 paths:
   template_case: "ooc_optimizer/cfd/template"
