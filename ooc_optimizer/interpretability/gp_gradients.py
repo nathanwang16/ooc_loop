@@ -101,13 +101,14 @@ def plot_local_sensitivity(result: LocalSensitivity, output_path: Path, *, title
     names = [n for n, _ in result.ranking]
     vals = [v for _, v in result.ranking]
 
-    fig, ax = plt.subplots(figsize=(6.0, max(2.5, 0.4 * len(names) + 1)))
-    ax.barh(range(len(names))[::-1], vals, color="tab:purple", alpha=0.8)
+    fig, ax = plt.subplots(figsize=(7.5, max(3.2, 0.55 * len(names) + 1.4)))
+    ax.barh(range(len(names))[::-1], vals, color="tab:purple", alpha=0.85)
     ax.set_yticks(range(len(names))[::-1])
-    ax.set_yticklabels(names)
-    ax.set_xlabel(r"$|\partial\mu/\partial x_{\mathrm{norm}}|$ at optimum")
+    ax.set_yticklabels(names, fontsize=15)
+    ax.set_xlabel(r"$|\partial\mu/\partial x_{\mathrm{norm}}|$ at optimum", fontsize=15)
+    ax.tick_params(axis="x", labelsize=13)
     if title:
-        ax.set_title(title)
+        ax.set_title(title, fontsize=16, pad=10)
     fig.tight_layout()
 
     output_path = Path(output_path)

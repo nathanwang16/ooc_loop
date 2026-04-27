@@ -201,7 +201,7 @@ def plot_tolerance_intervals(
     plus = [i.delta_plus_phys for i in intervals]
     minus = [i.delta_minus_phys for i in intervals]
 
-    fig, ax = plt.subplots(figsize=(6.5, max(2.5, 0.4 * len(names) + 1)))
+    fig, ax = plt.subplots(figsize=(8.0, max(3.2, 0.55 * len(names) + 1.4)))
     y = np.arange(len(names))
     ax.errorbar(
         np.zeros_like(y, dtype=float),
@@ -210,15 +210,17 @@ def plot_tolerance_intervals(
         fmt="o",
         color="tab:green",
         ecolor="tab:green",
-        capsize=4,
-        lw=2,
+        capsize=6,
+        lw=2.5,
+        markersize=9,
     )
     ax.set_yticks(y)
-    ax.set_yticklabels(names)
+    ax.set_yticklabels(names, fontsize=15)
     ax.axvline(0.0, color="0.5", lw=0.5)
-    ax.set_xlabel("Tolerance interval (physical units)")
+    ax.set_xlabel("Tolerance interval (physical units)", fontsize=15)
+    ax.tick_params(axis="x", labelsize=13)
     if title:
-        ax.set_title(title)
+        ax.set_title(title, fontsize=16, pad=10)
     fig.tight_layout()
 
     output_path = Path(output_path)

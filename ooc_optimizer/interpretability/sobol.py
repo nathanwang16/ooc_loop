@@ -146,22 +146,23 @@ def plot_sobol_bar(result: SobolResult, output_path: Path, *, title: Optional[st
     idx = np.arange(n)
     width = 0.4
 
-    fig, ax = plt.subplots(figsize=(max(5.0, 0.6 * n + 2), 4.0))
+    fig, ax = plt.subplots(figsize=(max(6.5, 0.8 * n + 2.5), 5.2))
     ax.bar(
         idx - width / 2, result.S1, width,
-        yerr=result.S1_conf, capsize=3, label=r"$S_1$", color="tab:blue", alpha=0.8,
+        yerr=result.S1_conf, capsize=4, label=r"$S_1$", color="tab:blue", alpha=0.85,
     )
     ax.bar(
         idx + width / 2, result.ST, width,
-        yerr=result.ST_conf, capsize=3, label=r"$S_T$", color="tab:red", alpha=0.8,
+        yerr=result.ST_conf, capsize=4, label=r"$S_T$", color="tab:red", alpha=0.85,
     )
     ax.set_xticks(idx)
-    ax.set_xticklabels(result.names, rotation=30, ha="right")
-    ax.set_ylabel("Sobol index")
+    ax.set_xticklabels(result.names, rotation=30, ha="right", fontsize=15)
+    ax.set_ylabel("Sobol index", fontsize=15)
+    ax.tick_params(axis="y", labelsize=13)
     ax.set_ylim(0, max(1.0, float(np.nanmax(result.ST) + np.nanmax(result.ST_conf))) * 1.1)
     if title:
-        ax.set_title(title)
-    ax.legend(loc="best", frameon=False)
+        ax.set_title(title, fontsize=16, pad=10)
+    ax.legend(loc="best", frameon=False, fontsize=15)
     ax.axhline(0.0, color="0.5", lw=0.5)
     fig.tight_layout()
 
