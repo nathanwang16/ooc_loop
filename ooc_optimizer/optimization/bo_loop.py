@@ -59,10 +59,15 @@ def _active_params(pillar_config: str, topology: str) -> List[bool]:
         active[PARAMETER_ORDER.index("delta_W")] = False
     if topology == "ladder":
         # Ladder is a fixed N-strip y-stacked-inlet topology with equal flow
-        # split; only chamber width W and Q_total influence the field. Pin the
-        # rest to midpoint via the mask so the GP doesn't waste effort on
-        # informationless inputs.
-        for name in ("theta", "r_flow", "delta_W", "d_p", "s_p"):
+        # split. theta and r_flow are genuinely inert here (verified
+        # 2026-04-27 audit): _bm_ladder reads neither, and the ladder BC
+        # writer hardcodes Q_per_inlet = Q_total/N with a midpoint-C scalar
+        # sweep instead of a drug/buffer split. delta_W is opposing-only.
+        # ABLATION 2026-04-27: d_p / s_p removed from this mask so that
+        # pillar_config="1x4" runs on ladder actually parameterise the
+        # pillar STL geometry (the pillar generator at
+        # geometry/generator.py:393 is topology-agnostic).
+        for name in ("theta", "r_flow", "delta_W"):
             active[PARAMETER_ORDER.index(name)] = False
     return active
 

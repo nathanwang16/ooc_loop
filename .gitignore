@@ -25,13 +25,20 @@ env/
 htmlcov/
 
 # Data outputs (regenerable) — match at any depth so examples/*/data/* is also ignored
+# Trailing-glob forms catch suffixed variants like data/cases_ladder_pillar_ablation/
+# and archived failure dumps like data/cases_..._bcfail_<ts>/.
 **/data/stl/
 **/data/cases/
+**/data/cases_*/
 **/data/results/
+**/data/results_*/
 **/data/experiments/
 **/data/manual_verification/
 **/data/manual_verification_complex/
 **/data/premise_test/
+
+# Stale paper-source archive (superseded by bayesian_src/; kept locally as backup)
+/bayesian.zip
 
 # Saved simulation run snapshots (e.g. data_run1, data_run_old)
 **/data_run*/

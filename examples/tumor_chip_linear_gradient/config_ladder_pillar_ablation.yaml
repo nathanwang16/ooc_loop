@@ -1,0 +1,111 @@
+# Ladder topology, pillar_config=1x4 ablation (2026-04-27).
+#
+# Purpose: validate whether d_p and s_p materially affect the L2-to-target
+# objective for ladder topology. Until now ladder was always run with
+# pillar_config="none", which masks d_p and s_p by construction; the
+# ladder-specific masking branch in bo_loop._active_params then doubly
+# masked them, so no past run has ever varied pillar geometry on ladder.
+#
+# A 2026-04-27 code-level audit confirmed:
+#   - theta is NEVER read by _bm_ladder (no inlet tube to taper).
+#   - r_flow is NEVER read by the ladder BC writer (equal Q split, midpoint-C
+#     staircase instead of drug/buffer).
+#   - delta_W is opposing-only.
+#   - d_p / s_p ARE consumed by the topology-agnostic pillar STL generator
+#     when pillar_config != "none".
+# So d_p / s_p are the only parameters where unmasking can produce a
+# non-degenerate signal. The bo_loop.py edit (same date) drops them from
+# the ladder-branch mask; setting pillar_config="1x4" here makes them
+# active via the existing pillar_config != "none" branch.
+#
+# Active params for this run: {W, d_p, s_p, Q_total} -> 4 dims.
+# Masked: {theta, r_flow, delta_W} pinned to midpoint.
+
+target_profile:
+  kind: linear_gradient
+  axis: y
+  c_high: 1.0
+  c_low: 0.0
+
+# Bounds copied from config_ladder_H_sweep.yaml (wider W upper for headroom;
+# r_flow / delta_W bounds retained even though both are masked, so the schema
+# validator is happy).
+continuous_bounds:
+  W:
+    min: 1500
+    max: 4500
+  d_p:
+    min: 100
+    max: 400
+  s_p:
+    min: 200
+    max: 1000
+  theta:
+    min: 15
+    max: 75
+  Q_total:
+    min: 5
+    max: 200
+  r_flow:
+    min: 0.10
+    max: 0.97
+  delta_W:
+    min: 0.12
+    max: 0.48
+
+# Relaxed mesh thresholds for pillar geometry (2026-04-27).
+# default_config sets mesh_max_concave_cells=0 and mesh_max_failed_checks=0,
+# which is unreachable for snappyHexMesh on cylindrical pillars: every mesh
+# we sampled produced ~412/22k (~1.8%) concave cells from the hex truncation
+# around pillar surfaces, plus 1 axis-non-aligned-edge check (harmless 2D
+# warning). Skewness (1.14) and non-orthogonality (26.4) both stayed well
+# inside acceptable simpleFoam ranges. Cap concave at 9% of cells to flag
+# genuine mesh breakage; allow the 2 known-harmless failed checks.
+# Override is shallow-merged at the top-level key, so we replicate the full
+# solver_settings block from default_config and patch only the two values.
+solver_settings:
+  convergence_criterion: 1.0e-6
+  max_iterations: 2000
+  mesh_resolution: 1
+  solver_timeout_s: 300
+  snappy_enable_snap: true
+  snappy_n_cells_between_levels: 3
+  snappy_resolve_feature_angle: 20
+  snappy_location_in_mesh: "(0.001 0.0002 0.000005)"
+  snappy_n_smooth_patch: 5
+  snappy_n_solve_iter: 100
+  snappy_n_relax_iter: 8
+  snappy_n_feature_snap_iter: 15
+  mesh_max_failed_checks: 2     # allow the 2 known-harmless checks for pillar geometry
+  mesh_max_non_ortho: 65.0
+  mesh_max_concave_cells: 2000  # ~9% of typical cell count; observed values are ~412 (~1.8%)
+
+optimization:
+  n_sobol_init: 24
+  n_bo_iterations: 76
+  total_per_config: 100
+  batch_size: 4
+  max_concurrent_cfd: 8
+  constraints:
+    tau_mean_min: 0.1
+    tau_mean_max: 2.0
+    f_dead_max: 0.08
+    Re_max: 100.0
+    aspect_ratio_max: 15.0
+  penalty_L2: 99.0
+  penalty_cv_tau: 999.0
+
+# Single-cell: ladder x pillars=1x4 x H=200.
+discrete_levels:
+  pillar_config: ["1x4"]
+  chamber_height: [200]
+  inlet_topology: ["ladder"]
+
+# Isolated output paths so existing 2026-04-26 ladder results are untouched.
+paths:
+  template_case: "ooc_optimizer/cfd/template"
+  stl_output_dir: "examples/tumor_chip_linear_gradient/data/stl"
+  case_output_dir: "examples/tumor_chip_linear_gradient/data/cases_ladder_pillar_ablation"
+  results_dir: "examples/tumor_chip_linear_gradient/data/results_ladder_pillar_ablation"
+  evaluation_log: "examples/tumor_chip_linear_gradient/data/results_ladder_pillar_ablation/evaluations.jsonl"
+  figures_dir: "examples/tumor_chip_linear_gradient/data/figures_ladder_pillar_ablation"

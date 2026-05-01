@@ -400,7 +400,15 @@ def _rewrite_scalar_template(t_path: Path, *, pillar_config: str) -> None:
 
 
 def _frontandback_type(pillar_config: str) -> str:
-    return "symmetry" if pillar_config.lower() != "none" else "empty"
+    # The 2D blockMesh produces frontAndBack with type=empty in
+    # constant/polyMesh/boundary, and snappyHexMesh on cylindrical pillars
+    # preserves that classification (the mesh stays 2D — pillars are
+    # extruded straight through the z range, no 3D refinement is added).
+    # An earlier convention swapped to "symmetry" when pillars were present;
+    # that produced "inconsistent patch and patchField types" FOAM FATAL IO
+    # errors in ladder + pillars=1x4 (verified 2026-04-27 ablation). The
+    # patch type must match the mesh classification, so always emit empty.
+    return "empty"
 
 
 def _write_u_field_multi(
