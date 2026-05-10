@@ -9,14 +9,15 @@ This folder contains every figure used in the manuscript and poster, copied loca
 ```
 figures/
 ├── manuscript/              # All PNGs from bayesian_src/ (LaTeX manuscript figures)
-└── poster_panels/           # Poster figures organised by panel
-    ├── 01_topology_candidates/
-    ├── 02_cross_topology_summary/
-    ├── 03_sobol_per_topology/
-    ├── 04_local_sensitivity/
-    ├── 05_tolerance/
-    ├── 06_phase2_scan/
-    └── paper_v2/            # Paper-v2 figure set + Σ S_T audit table
+├── poster_panels/           # Poster figures organised by panel
+│   ├── 01_topology_candidates/
+│   ├── 02_cross_topology_summary/
+│   ├── 03_sobol_per_topology/
+│   ├── 04_local_sensitivity/
+│   ├── 05_tolerance/
+│   ├── 06_phase2_scan/
+│   └── paper_v2/            # Paper-v2 figure set + Σ S_T audit table
+└── smoke_analysis/          # Convergence / constraint-scatter smoke plots from a v1-era run
 ```
 
 ---

@@ -6,11 +6,11 @@ scalar from concentration to floor wall-shear-stress requires only a
 configuration change (different constraint bounds + the `cv_tau` objective
 instead of `L2_to_target`), not a code change.
 
-The v1 development guide lives at
-[`Development_Guide.md`](../../Development_Guide.md); the v2 guide that
-supersedes it lives at
-[`Development_Guide_v2.md`](../../Development_Guide_v2.md).  Nothing under
-this directory is required for the v2 manuscript; it exists to:
+The v2 development guide that supersedes the original v1 guide lives at
+[`Development_Guide_v2.md`](../../Development_Guide_v2.md) (the v1 guide
+itself was removed in the 2026-05-03 cleanup; recover from git history at
+tag `v0.5.0` if needed).  Nothing under this directory is required for the
+v2 manuscript; it exists to:
 
 1. Provide a second worked example for the JOSS companion paper
    (demonstrates extensibility to other inverse-design problems).

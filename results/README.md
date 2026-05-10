@@ -2,7 +2,7 @@
 
 **Repository:** `ooc_loop`
 **Reporting cutoff:** 2026-04-30 (after H-sweep and pillar-ablation campaigns).
-**Author / contact:** Jay Tang (`jt5088@nyu.edu`).
+**Author / contact:** Nathan Wang.  
 **Status of this folder:** authoritative, first-principles narrative of *what was implemented and what it found*. All deeper documents are reachable from this README.
 
 ---
@@ -11,18 +11,20 @@
 
 This folder is the single source of truth for the project's principles, methods, and results. It is intentionally redundant with the LaTeX manuscript (`bayesian_src/main.tex`), the poster draft (`poster/poster_draft.md`), and the per-phase findings docs — those are written for specific external audiences; this folder is written so a reader who has never seen the project can rebuild the whole story from first principles.
 
-| File | Audience | Read first if you want… |
-|---|---|---|
-| `README.md` (this) | anyone | a 5-minute headline picture |
-| `01_problem_and_principles.md` | anyone | why a linear gradient, why topology-first, what mass conservation forbids |
-| `02_methodology.md` | technical reader | the CFD + BO + interpretability pipeline, with formulas |
-| `03_topology_screening.md` | designer | the eight topologies and the admissibility logic |
-| `04_optimization_results.md` | reviewer | the four-topology campaign + H-sweep + pillar ablation, with winner geometries |
-| `05_interpretability_findings.md` | reviewer | F1/F2/F3, fabrication-tolerance intervals, constraint-binding diagnostic |
-| `06_translation_and_caveats.md` | experimentalist | the bench-ready chip spec + honest limitations |
-| `07_future_work.md` | follow-up team | tiered next steps |
-| `primary_sources/` | auditor | unchanged copies of the diagnostic / integration / H-sweep findings + the paper revision plan |
-| `figures/README.md` | reader | which figure lives where (most live in `bayesian_src/` and `poster/figures/paper_v2/`) |
+
+| File                              | Audience         | Read first if you want…                                                                       |
+| --------------------------------- | ---------------- | --------------------------------------------------------------------------------------------- |
+| `README.md` (this)                | anyone           | a 5-minute headline picture                                                                   |
+| `01_problem_and_principles.md`    | anyone           | why a linear gradient, why topology-first, what mass conservation forbids                     |
+| `02_methodology.md`               | technical reader | the CFD + BO + interpretability pipeline, with formulas                                       |
+| `03_topology_screening.md`        | designer         | the eight topologies and the admissibility logic                                              |
+| `04_optimization_results.md`      | reviewer         | the four-topology campaign + H-sweep + pillar ablation, with winner geometries                |
+| `05_interpretability_findings.md` | reviewer         | F1/F2/F3, fabrication-tolerance intervals, constraint-binding diagnostic                      |
+| `06_translation_and_caveats.md`   | experimentalist  | the bench-ready chip spec + honest limitations                                                |
+| `07_future_work.md`               | follow-up team   | tiered next steps                                                                             |
+| `primary_sources/`                | auditor          | unchanged copies of the diagnostic / integration / H-sweep findings + the paper revision plan |
+| `figures/README.md`               | reader           | which figure lives where (most live in `bayesian_src/` and `poster/figures/paper_v2/`)        |
+
 
 If you have *one minute*: read §1 below. If you have *five*: read this whole file. If you have *one hour*: read this file plus `02_methodology.md` and `04_optimization_results.md`.
 
@@ -34,15 +36,17 @@ We built a constrained-Bayesian-optimization (BO) pipeline that designs a microf
 
 **Headline numbers**
 
-| Quantity | Value | Where |
-|---|---|---|
-| Best feasible L2 (H=300 ladder) | **0.0671** | §4.2 |
-| R²-to-linear at H=300 | **0.990** | §4.2 |
-| Improvement vs. axis=x baseline (cross-target) | 9.4× | §1.3 below |
-| Improvement vs. next-best topology, axis=y, same constraints | **10.8×** | §4.1 |
-| Best L2 with 1×4 pillars (constraint-relaxed) | **0.0568** | §4.3 |
-| Feasibility at H=300 | 96.5% (vs. 37% at H=200) | §4.2 |
-| Total CFD evaluations across the campaign | ~1300 | — |
+
+| Quantity                                                     | Value                    | Where      |
+| ------------------------------------------------------------ | ------------------------ | ---------- |
+| Best feasible L2 (H=300 ladder)                              | **0.0671**               | §4.2       |
+| R²-to-linear at H=300                                        | **0.990**                | §4.2       |
+| Improvement vs. axis=x baseline (cross-target)               | 9.4×                     | §1.3 below |
+| Improvement vs. next-best topology, axis=y, same constraints | **10.8×**                | §4.1       |
+| Best L2 with 1×4 pillars (constraint-relaxed)                | **0.0568**               | §4.3       |
+| Feasibility at H=300                                         | 96.5% (vs. 37% at H=200) | §4.2       |
+| Total CFD evaluations across the campaign                    | ~1300                    | —          |
+
 
 ---
 
@@ -73,12 +77,14 @@ Five replacement candidates were proposed and ranked by mass-conservation compat
 
 Under the new five-constraint feasibility set (`tau ∈ [0.1, 2.0]`, `f_dead ≤ 0.08`, `Re ≤ 100`, `aspect_ratio ≤ 15`, plus convergence/mesh validity), 200 evaluations per topology produced:
 
-| Topology | Best feasible L2 | Active dims |
-|---|---|---|
-| **`ladder`** | **0.0818** | 2 (W, Q_total) |
-| `opposing` | 0.8822 | 5 |
-| `same_side_Y` | 0.9937 | 4 |
-| `asymmetric_lumen` | 1.0875 | 4 |
+
+| Topology           | Best feasible L2 | Active dims    |
+| ------------------ | ---------------- | -------------- |
+| `**ladder`**       | **0.0818**       | 2 (W, Q_total) |
+| `opposing`         | 0.8822           | 5              |
+| `same_side_Y`      | 0.9937           | 4              |
+| `asymmetric_lumen` | 1.0875           | 4              |
+
 
 The ladder beats the next-best topology by **10.8×** on the same target. The 9.4× number that appears elsewhere compares the H = 300 ladder winner (axis-`y`) against the original axis-`x` BO winner — it spans both a topology change *and* a target-axis flip, so the apples-to-apples 10.8× is the headline. Detail in `04_optimization_results.md` §1.
 
@@ -99,9 +105,9 @@ Mechanistic interpretation: with no pillars the chip is a parallel-plate channel
 
 ## 4. Project artefacts at a glance
 
-**Latest LaTeX manuscript:** `bayesian_src/main.tex` (verified 2026-04-30 to be the newest revision; supersedes the older `bayesian.zip` content).
+**Latest LaTeX manuscript:** `bayesian_src/main.tex` (verified 2026-04-30 to be the newest revision; the older `bayesian.zip` archive was deleted in the 2026-05-03 cleanup).
 
-**Latest poster materials:** `poster/poster_draft.md`, `poster/figures/paper_v2/`, `poster/findings/*.md`, `poster/PAPER_REVISION_PLAN.md`.
+**Latest poster materials:** `poster/poster_draft.md`, `poster/figures/paper_v2/`, `poster/PAPER_REVISION_PLAN.md`. The per-phase findings docs that previously lived under `poster/findings/` are now consolidated in `primary_sources/` (single source of truth, see below).
 
 **Per-phase analytical writeups (preserved verbatim):** `results/primary_sources/diagnostic_findings.md`, `results/primary_sources/integration_run_findings.md`, `results/primary_sources/ladder_H_sweep_findings.md`. These are the in-the-trenches analyses written immediately after each campaign — the highest-fidelity record of what we knew at each step.
 
